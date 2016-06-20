@@ -124,7 +124,7 @@ namespace utl
     Colors Colormap::getColorsFromData(const std::vector<Scalar> &data)
     {
       // Set range limits if they were not set before
-      if (isnan(minVal_) || isnan(maxVal_))
+      if (std::isnan(minVal_) || std::isnan(maxVal_))
         setRangeLimitsFromData<Scalar>(data);
       
       // Get lookup table

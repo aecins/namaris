@@ -151,7 +151,7 @@ namespace utl
         visualizer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_LUT, colormal_type, id);
       if (range_auto)
         visualizer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_LUT_RANGE, pcl::visualization::PCL_VISUALIZER_LUT_RANGE_AUTO, id);
-      else if (!isnan(range_min) and !isnan(range_max))
+      else if (!std::isnan(range_min) and !std::isnan(range_max))
         visualizer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_LUT_RANGE, range_min, range_max, "cloud");
     }    
     

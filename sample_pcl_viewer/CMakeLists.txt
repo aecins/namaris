@@ -9,7 +9,7 @@ add_definitions("-Wall -pedantic")
 ### Add CPP tools
 ### ----------------------------------------------------------------------------
 
-set (CPP_TOOLS_INCLUDE_DIRS "../")    # Make sure this points to cpp_tools directory
+set (CPP_TOOLS_INCLUDE_DIRS "../include")    # Make sure this points to cpp_tools directory
 include_directories (${CPP_TOOLS_INCLUDE_DIRS})
 
 ### ----------------------------------------------------------------------------

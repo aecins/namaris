@@ -7,6 +7,7 @@
 // OpenCV
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/core/eigen.hpp>
+#include <opencv2/core/version.hpp>
 
 namespace utl
 {
@@ -212,8 +213,13 @@ namespace utl
                                                 K_cam2, d_cam2,
                                                 image_size,
                                                 R, T, E, F,
+#if CV_VERSION_MAJOR == 3 && CV_VERSION_MINOR >= 1
+                                                calibration_flags,
+                                                cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 1e-6)
+#else
                                                 cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 1e-6),
                                                 calibration_flags
+#endif
                                               );
       
       return true;
