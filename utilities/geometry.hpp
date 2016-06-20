@@ -11,11 +11,11 @@ namespace utl
 {
   namespace geom
   {
-    /** \brief Extract plane normal and point on the plane closest to the origin
+    /** \brief Extract plane unit normal and point on the plane closest to the origin
      * from coefficients of an equation of a plane (ax + by + cz + d = 0).
      *  \param[in]  plane_coefficients plane coefficients (ax + by + cz + d = 0)
      *  \param[out] plane_point plane point closest to the origin
-     *  \param[out] plane_normal plane normal
+     *  \param[out] plane_normal plane unit normal
      */
     template <class Scalar>
     inline
@@ -30,7 +30,7 @@ namespace utl
     /** \brief Given a point an a normal defining a plane extract coefficients 
      * of the equation of a plane (ax + by + cz + d = 0).
      *  \param[in]  plane_point plane point closest to the origin
-     *  \param[in]  plane_normal plane normal
+     *  \param[in]  plane_normal plane unit normal
      *  \param[out] plane_coefficients plane coefficients (ax + by + cz + d = 0)
      */
     template <class Scalar>
@@ -101,7 +101,7 @@ namespace utl
       return pointToPlaneDistance<Scalar>(point, plane_point, plane_normal);
     }
 
-    /** \brief Get distance between two lines.
+    /** \brief Get distance between two skew lines.
      *  \param[in] line1_point1 first point of the line 1
      *  \param[in] line1_point2 second point of the line 1
      *  \param[in] line2_point1 first point of the line 2
@@ -123,7 +123,7 @@ namespace utl
       Eigen::Vector3f a = line1_point2 - line1_point1;
       Eigen::Vector3f b = line2_point2 - line2_point1;
       
-      // If lines are parallel return the 
+      // If lines are parallel return the distance between point and line
       Scalar denom = a.cross(b).norm();
       if (denom < eps)
         return pointToLineDistance<Scalar>(line2_point1, line1_point1, line1_point2);
@@ -132,34 +132,87 @@ namespace utl
       return std::abs(c.dot(a.cross(b))) / denom;
     }
 
+    // NOTE Why would you have a special case for lines that go through origin?
     /** \brief Get distance between two lines. Both lines are assumed to go 
      * through the origin.
-     *  \param[in] line1_point line 1 direction
-     *  \param[in] line2_point line 2 direction
+     *  \param[in] line1_direction line 1 direction vector (can be non-unit)
+     *  \param[in] line2_direction line 2 direction vector (can be non-unit)
      *  \param[in] eps  tolerance for parallel lines check
      *  \return distance between two lines
      *  \note http://mathworld.wolfram.com/Line-LineDistance.html
      */
     template <class Scalar>
     inline
-    Scalar lineToLineDistance ( const Eigen::Matrix< Scalar, 3, 1> &line1_point,
-                                const Eigen::Matrix< Scalar, 3, 1> &line2_point,
+    Scalar lineToLineDistance ( const Eigen::Matrix< Scalar, 3, 1> &line1_direction,
+                                const Eigen::Matrix< Scalar, 3, 1> &line2_direction,
                                 const Scalar eps = 1e-12
                               )
     {
       // Get line direction vectors
-      Eigen::Vector3f a = line1_point;
-      Eigen::Vector3f b = line2_point;
+      Eigen::Vector3f a = line1_direction;
+      Eigen::Vector3f b = line2_direction;
       
       // If lines are parallel return the 
       Scalar denom = a.cross(b).norm();
       if (denom < eps)
         return static_cast<Scalar>(0.0f);
       
-      Eigen::Vector3f c = line2_point - line1_point;
+      Eigen::Vector3f c = line2_direction - line1_direction;
       return std::abs(c.dot(a.cross(b))) / denom;
     }
-        
+
+    /** \brief Get angle between two skew lines.
+     *  \param[in] line1_point1 first point of the line 1
+     *  \param[in] line1_point2 second point of the line 1
+     *  \param[in] line2_point1 first point of the line 2
+     *  \param[in] line2_point2 second point of the line 2
+     *  \param[in] eps  tolerance for parallel lines check
+     *  \return distance between two lines
+     *  \note http://mathworld.wolfram.com/Line-LineDistance.html
+     */
+    template <class Scalar>
+    inline
+    Scalar lineLineAngle  ( const Eigen::Matrix< Scalar, 3, 1> &line1_point1,
+                            const Eigen::Matrix< Scalar, 3, 1> &line1_point2,
+                            const Eigen::Matrix< Scalar, 3, 1> &line2_point1,
+                            const Eigen::Matrix< Scalar, 3, 1> &line2_point2,
+                            const Scalar eps = 1e-12
+                          )
+    {
+      // Get line direction vectors
+      Eigen::Vector3f a = line1_point2 - line1_point1;
+      Eigen::Vector3f b = line2_point2 - line2_point1;
+      
+      return std::acos(a.dot(b) / (a.norm() * b.norm() ));
+    }
+    
+    /** \brief Get angle between a line and a plane.
+     *  \param[in] line_direction direction vector of the line (can be non-unit)
+     *  \param[in] plane_normal   unit normal of the plane
+     */
+    template <class Scalar>
+    inline
+    Scalar linePlaneAngle ( const Eigen::Matrix< Scalar, 3, 1> &line_direction,
+                            const Eigen::Matrix< Scalar, 3, 1> &plane_normal
+                          )
+    {
+      return std::asin (std::abs (line_direction.dot (plane_normal) / line_direction.norm ()));
+    }    
+    
+    /** \brief Get angle between a line and a plane.
+     *  \param[in] line_direction direction unit vector of the line
+     *  \param[in] plane_normal   unit normal of the plane
+     */
+    template <class Scalar>
+    inline
+    Scalar linePlaneAngle ( const Eigen::Matrix< Scalar, 3, 1> &line1_point,
+                            const Eigen::Matrix< Scalar, 3, 1> &line2_point,
+                            const Eigen::Matrix< Scalar, 3, 1> &plane_normal
+                          )
+    {
+      return linePlaneAngle<Scalar>(line1_point - line2_point, plane_normal);
+    }
+    
     /** \brief Project point on a line.
      *  \param[in] point point to be projected
      *  \param[in] line_point1  first points of a line
@@ -294,12 +347,12 @@ namespace utl
      */
     template <typename Scalar>
     inline Scalar
-    vectorAngleSigned (const Eigen::Matrix< Scalar, 3, 1> &v1, const Eigen::Matrix< Scalar, 3, 1> &v2, const Eigen::Matrix< Scalar, 3, 1> &normal)
+    vectorAngleCW (const Eigen::Matrix< Scalar, 3, 1> &v1, const Eigen::Matrix< Scalar, 3, 1> &v2, const Eigen::Matrix< Scalar, 3, 1> &normal)
     {
       Scalar cos = v1.dot(v2);
       Scalar sin = math::clampValue<Scalar>(normal.dot(v1.cross(v2)), -1.0, 1.0);
       return std::atan2(sin, cos);
-    }  
+    }
         
     /** \brief Get counter clockwise difference between two angles (in radians)
       * \param[in] angle_start    start angle
@@ -308,7 +361,7 @@ namespace utl
       */
     template <typename Scalar>
     inline Scalar
-    angleDifferenceCCw (const Scalar start_angle, const Scalar end_angle)
+    angleDifferenceCCW (const Scalar start_angle, const Scalar end_angle)
     {
       return math::remainder(end_angle - start_angle, static_cast<Scalar>(2 * M_PI));
     }

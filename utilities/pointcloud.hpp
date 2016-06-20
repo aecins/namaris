@@ -9,6 +9,7 @@
 #include <pcl/search/kdtree.h>
 #include <pcl/common/centroid.h>
 #include <pcl/common/pca.h>
+#include <pcl/surface/convex_hull.h>
 
 // CPP tools
 #include <utilities/map.hpp>
@@ -58,13 +59,13 @@ namespace utl
       }
 
       /** \brief Destructor. */
-      virtual ~Downsample ()
+      ~Downsample ()
       {
       }
       
       /** \brief Provide a pointer to the input dataset
-        * \param cloud the const boost shared pointer to a PointCloud message
-        */      
+       *  \param cloud the const boost shared pointer to a PointCloud message
+       */      
       virtual void
       setInputCloud(const typename pcl::PCLBase< PointT >::PointCloudConstPtr& cloud)
       {
@@ -73,8 +74,8 @@ namespace utl
       }
 
       /** \brief Set downsampling method used.
-        * \param downsample_method downsample method
-        */            
+       *  \param downsample_method downsample method
+       */            
       inline void
       setDownsampleMethod (const CloudDownsampleMethod downsample_method)
       {
@@ -82,8 +83,8 @@ namespace utl
       }
 
       /** \brief Get downsampling method used.
-        * \param downsample_method downsample method
-        */            
+       *  \param downsample_method downsample method
+       */            
       inline CloudDownsampleMethod
       getDownsampleMethod ()  const
       {
@@ -91,8 +92,8 @@ namespace utl
       }
       
       /** \brief Set the voxel grid leaf size.
-        * \param[in] leaf_size the voxel grid leaf size
-        */      
+       *  \param[in] leaf_size the voxel grid leaf size
+       */      
       inline void
       setLeafSize(const float leaf_size)
       {
@@ -218,7 +219,189 @@ namespace utl
         nearest_indices_.clear();
       }
     };
-          
+
+    /** \brief Fit a plane to a pointcloud.
+     *  \param[in] cloud input cloud
+     *  \param[in] indices  indices of the points used to calculate the plane
+     *  \param[out] plane_coefficients coefficients of a plane (ax + by + cz + d = 0)
+     */
+    template <typename PointT>
+    inline
+    void fitPlane ( const typename pcl::PointCloud<PointT>::ConstPtr &cloud, const std::vector<int> &indices, Eigen::Vector4f &plane_coefficients)
+    {
+      //----------------------------------------------------------------------------
+      // Check that we have a sufficient number of points
+      if (cloud->size() < 3)
+      {
+        std::cout << "[utl::cloud::fitPlane3D] input cloud contains fewer that 3 points. Can not fit a plane." << std::endl;
+        abort();
+      }
+
+      //----------------------------------------------------------------------------
+      // Fit plane using PCA
+      pcl::PCA<PointT> pcaSolver;
+      pcaSolver.setInputCloud (cloud);
+      pcaSolver.setIndices (boost::make_shared<std::vector<int> > (indices));
+
+      // Extract plane point and normal
+      Eigen::Vector3f point   = pcaSolver.getMean().head(3);
+      Eigen::Vector3f normal  = pcaSolver.getEigenVectors().col(2);
+
+      // Convert to plane coefficients
+      utl::geom::pointNormalToPlaneCoefficients<float>(point, normal, plane_coefficients);
+    }    
+    
+    /** \brief Fit a plane to a pointcloud.
+     *  \param[in] cloud input cloud
+     *  \param[out] plane_coefficients coefficients of a plane (ax + by + cz + d = 0)
+     */
+    template <typename PointT>
+    inline
+    void fitPlane ( const typename pcl::PointCloud<PointT>::ConstPtr &cloud, Eigen::Vector4f &plane_coefficients)
+    {
+      // Create fake indices
+      std::vector<int> indices (cloud->size());
+      for (size_t pointId = 0; pointId < cloud->size(); pointId++)
+        indices[pointId] = pointId;
+      
+      // Fit plane
+      fitPlane<PointT>(cloud, indices, plane_coefficients);
+    }    
+    
+    /** \brief @b ConvexHull2D Projects pointcloud to a plane and computes the 
+     * 2D convex hull of the projected points. The projection plane can be set
+     * by the user. If it is not set it is computed automatically by
+     * fitting a plane to the input pointcloud using PCA.
+     */
+    template<typename PointT>
+    class ConvexHull2D : public pcl::PCLBase<PointT>
+    {  
+    protected:
+      using pcl::PCLBase<PointT>::input_;
+      using pcl::PCLBase<PointT>::indices_;
+      using pcl::PCLBase<PointT>::initCompute;
+      using pcl::PCLBase<PointT>::deinitCompute;
+      
+    public:
+      typedef pcl::PointCloud<PointT> PointCloud;
+      typedef typename PointCloud::Ptr PointCloudPtr;
+      typedef typename PointCloud::ConstPtr PointCloudConstPtr;
+      
+    public:
+
+      /** \brief Empty constructor. */
+      ConvexHull2D ()  :
+        plane_coefficients_ (Eigen::Vector4f::Zero()),
+        compute_plane_ (true),
+        chull_ ()
+      {
+        chull_.setDimension(2);
+        chull_.setComputeAreaVolume(true);
+      }
+
+      /** \brief Destructor. */
+      virtual ~ConvexHull2D ()
+      {
+        input_projected_.reset();
+      }
+      
+      /** \brief Provide a pointer to the input cloud. */
+      void 
+      setInputCloud (const PointCloudConstPtr &cloud)
+      {
+        pcl::PCLBase<PointT>::setInputCloud (cloud);
+        resetComputation ();
+      }
+      
+      /** \brief Set coefficients of the plane to which the points will be projected. */            
+      inline void
+      setPlaneCoefficients (const Eigen::Vector4f &plane_coefficients)
+      {
+        plane_coefficients_ = plane_coefficients;
+        compute_plane_ = false;
+      }
+      
+      /** \brief Get plane coefficients of the plane to which the points will be projected (either set by user or computed automatically). */
+      inline Eigen::Vector4f
+      getPlaneCoefficients ()  const  { return plane_coefficients_; }
+      
+      /** \brief Get input cloud projected on the 2D plane. Need to run reconstruct first*/
+      inline PointCloudConstPtr
+      getInputCloudProjected () const { return (input_projected_); }
+
+      /** \brief Compute a convex hull for all points given.
+        * \param[out] points the resultant points lying on the convex hull.
+        */
+      void
+      reconstruct (PointCloud &points)
+      {
+        // Initialize computation and check that points and indices are not empty
+        if (!initCompute () || input_->points.empty () || indices_->empty ())
+        {
+          points.points.clear ();
+          return;
+        }
+        
+        // Fit a plane to the input cloud if required
+        if (compute_plane_)
+        {
+          utl::cloud::fitPlane<PointT>(input_, *indices_, plane_coefficients_);
+        }
+        else if (plane_coefficients_ == Eigen::Vector4f::Zero ())
+        {
+          std::cout << "[utl::cloud::ConvexHull2D::reconstruct] plane coefficients not provided but plane is not set to be computed automatically. This is not supposed to happen." << std::endl;
+          return;
+        }
+        
+        // Project points onto the plane
+        input_projected_.reset(new PointCloud);
+        input_projected_->resize(input_->size());
+        
+        for (size_t pointIdIt = 0; pointIdIt < indices_->size(); pointIdIt++)
+        {
+          int pointId = (*indices_)[pointIdIt];
+          Eigen::Vector3f point = input_->points[pointId].getVector3fMap();
+          input_projected_->points[pointId].getVector3fMap() = utl::geom::projectPointToPlane<float>(point, plane_coefficients_);
+        }
+        
+        // Compute convex hull
+        chull_.setInputCloud (input_projected_);
+        chull_.setIndices (indices_);
+        chull_.reconstruct (points);
+        
+        // Deinit
+        deinitCompute ();
+      }
+      
+      /** \brief Returns the total area of the convex hull. */
+      double
+      getTotalArea () const { return (chull_.getTotalArea()); }
+      
+    private:
+
+      /** \brief Coefficients of the plane to which the points are projected. */
+      Eigen::Vector4f plane_coefficients_;
+      
+      /** \brief Flag indicating whether projection plane should be computed automatically. */
+      bool compute_plane_;
+
+      /** \brief Input cloud projected onto a 2D plane. */
+      PointCloudPtr input_projected_;
+      
+      /** \brief Convex hull object. */
+      typename pcl::ConvexHull<PointT>  chull_;
+      
+      /** \brief Reset intermideate computation results. */
+      inline void
+      resetComputation ()
+      {
+        input_projected_.reset();
+        if (compute_plane_)
+          plane_coefficients_ = Eigen::Vector4f::Zero();
+      }
+    };    
+    
+    // DEPRECATED
     /** \brief Downsample a cloud using VoxelGrid filter
      *  \param[in]  cloud              input cloud
      *  \param[in]  voxel_size         size of the voxel
@@ -248,6 +431,7 @@ namespace utl
       return vg;
     }
 
+    // DEPRECATED
     /** \brief Downsample a cloud using VoxelGrid filter
      *  \param[in]  cloud              input cloud
      *  \param[in]  voxel_size         size of the voxel
@@ -264,6 +448,7 @@ namespace utl
       return downsampleCloud<PointT>(cloud, voxel_size, cloud_downsampled, dummy);
     }    
     
+    // DEPRECATED
     /** \brief Methods for downsampling a normal */
     enum NormalDownsampleMethod
     { 
@@ -271,6 +456,7 @@ namespace utl
       NEAREST_NEIGHBOR    /**< downsampled normal is chosen to be equal to the normal of the nearest neighbour to the voxel centroid */
     };
     
+    // DEPRECATED
     /** \brief Downsample a cloud with normals using VoxelGrid filter.
      *  \param[in]  cloud              input cloud
      *  \param[in]  voxel_size         size of the voxel
@@ -320,6 +506,7 @@ namespace utl
       return vg;
     }
     
+    // DEPRECATED
     /** \brief Downsample a cloud with normals using VoxelGrid filter.
      *  \param[in]  cloud              input cloud
      *  \param[in]  voxel_size         size of the voxel
@@ -338,6 +525,7 @@ namespace utl
       return downsampleCloudWithNormals<PointT>(cloud, voxel_size, cloud_downsampled, dummy, normal_downsample_method);
     }
 
+    // DEPRECATED
     /** Generate graph structure representing local connectivity between points in
      * a pointcloud. Each point is connected to its k nearest neighbors.
      *  \param[in]  cloud             input cloud
@@ -377,7 +565,7 @@ namespace utl
         for (size_t nbrId = 1; nbrId < neighbors.size(); nbrId++)
           graph::addEdge(pointId, neighbors[nbrId], g);
       }
-          
+
       // If there are no edges - return false
       if (graph::getNumEdges(g) < 1)
       {
@@ -530,35 +718,6 @@ namespace utl
         cloud_out.points[i].y = (cloud_in.points[i].y - centroid[1]) * scale_factor + centroid[1];
         cloud_out.points[i].z = (cloud_in.points[i].z - centroid[2]) * scale_factor + centroid[2];
       }
-    }
-    
-    /** \brief Fit a plane to a pointcloud.
-      * \param[in] cloud input cloud
-      * \param[out] plane_coefficients coefficients of a plane (ax + by + cz + d = 0)
-      */
-    template <typename PointT>
-    inline
-    void fitPlane ( const typename pcl::PointCloud<PointT>::ConstPtr &cloud, Eigen::Vector4f &plane_coefficients)
-    {
-      //----------------------------------------------------------------------------
-      // Check that we have a sufficient number of points
-      if (cloud->size() < 3)
-      {
-        std::cout << "[utl::cloud::fitPlane3D] input cloud contains fewer that 3 points. Can not fit a plane." << std::endl;
-        abort();
-      }
-
-      //----------------------------------------------------------------------------
-      // Fit plane using PCA
-      pcl::PCA<PointT> pcaSolver;
-      pcaSolver.setInputCloud(cloud);
-
-      // Extract plane point and normal
-      Eigen::Vector3f point   = pcaSolver.getMean().head(3);
-      Eigen::Vector3f normal  = pcaSolver.getEigenVectors().col(2);
-
-      // Convert to plane coefficients
-      utl::geom::pointNormalToPlaneCoefficients<float>(point, normal, plane_coefficients);
     }
     
     /** \brief Given two pointclouds find the closest point between them

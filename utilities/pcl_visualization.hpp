@@ -301,13 +301,13 @@ namespace utl
       setPointCloudRenderProps(visualizer, id, point_size);
     }    
     
-        /** \brief Show pointcloud normals
+    /** \brief Show pointcloud normals
      *  \param[in]  visualizer  visualizer object
      *  \param[in]  cloud       pointcloud
      *  \param[in]  level       display only every level'th point (default: 100)
      *  \param[in]  scale       the normal arrow scale (default: 0.02m)
      *  \param[in]  id          point cloud object id prefix (default: cloud)
-     *  \param[in]  point_size  size of the points used for visualization
+     *  \param[in]  line_width  width of the normal lines
      *  \param[in]  color       color of the cloud
      *  \param[in]  opacity     opacity of the cloud
      */
@@ -318,13 +318,41 @@ namespace utl
                             const int level = 100,
                             const float scale = 0.02f,
                             const std::string &id = "normals",
-                            const float point_size = -1.0,
+                            const float line_width = -1.0,
                             const Color &color = Color(),
                             const float opacity = -1.0
                           )
     {
       visualizer.addPointCloudNormals<PointT>(cloud, level, scale, id);
-      setNormalCloudRenderProps(visualizer, id, point_size, color, opacity);
+      setNormalCloudRenderProps(visualizer, id, line_width, color, opacity);
+    }
+
+    /** \brief Show pointcloud normals for a specific subset of points in the
+     * cloud.
+     *  \param[in]  visualizer  visualizer object
+     *  \param[in]  cloud       pointcloud
+     *  \param[in]  indices     indices of points fow which normals will be displayed
+     *  \param[in]  scale       the normal arrow scale (default: 0.02m)
+     *  \param[in]  id          point cloud object id prefix (default: cloud)
+     *  \param[in]  point_size  size of the points used for visualization
+     *  \param[in]  color       color of the cloud
+     *  \param[in]  opacity     opacity of the cloud
+     */
+    template <typename PointT>
+    inline
+    void showNormalCloud  ( pcl::visualization::PCLVisualizer &visualizer,
+                            const typename pcl::PointCloud<PointT>::ConstPtr &cloud,
+                            const std::vector<int> indices,
+                            const float scale = 0.02f,
+                            const std::string &id = "normals",
+                            const float point_size = -1.0,
+                            const Color &color = Color(),
+                            const float opacity = -1.0
+                          )
+    {
+      typename pcl::PointCloud<PointT>::Ptr cloudIndexed (new pcl::PointCloud<PointT>);
+      pcl::copyPointCloud<PointT>(*cloud, indices, *cloudIndexed);
+      showNormalCloud<PointT>(visualizer, cloudIndexed, 1, scale, id, point_size, color, opacity);
     }
     
     //----------------------------------------------------------------------------
@@ -965,6 +993,12 @@ namespace utl
       
       if (opacity != -1.0f)
         visualizer.setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, opacity, id);
+      
+//       // Show plane normal
+//       pcl::PointXYZ p1, p2;
+//       p1.getVector3fMap() = plane_point;
+//       p2.getVector3fMap() = plane_point + plane_normal * 0.2;
+//       visualizer.addLine(p1, p2);
     }
 
     /** \brief visualize a plane by plotting a square polygon 
@@ -994,6 +1028,40 @@ namespace utl
     //----------------------------------------------------------------------------
     // Miscelanious
     //----------------------------------------------------------------------------    
+    
+    /** \brief Show correspondences between points by rendering a line between
+     * each pair of corresponding points.
+     *  \param[in]  visualizer      visualizer object
+     *  \param[in]  source_points The source points
+     *  \param[in]  target_points The target points
+     *  \param[in]  correspondences The mapping from source points to target points. Each element must be an index into target_points
+     *  \param[in]  nth display only the Nth correspondence (e.g., skip the rest)
+     *  \param[in]  id the polygon object id (default: "correspondences")
+     *  \param[in]  line_width   width of the lines
+     *  \param[in]  opacity opacity of the lines
+     */
+    template <typename PointT> void
+    showCorrespondences ( pcl::visualization::PCLVisualizer &visualizer,
+                          const typename pcl::PointCloud<PointT>::ConstPtr &source_points,
+                          const typename pcl::PointCloud<PointT>::ConstPtr &target_points,
+                          const pcl::Correspondences &correspondences,
+                          const int nth = 1,
+                          const std::string &id_prefix = "crsp_",
+                          const float line_width = -1.0f,
+                          const float opacity = -1.0f
+                        )
+    {
+      // Show correspondences
+      for (size_t crspId = 0; crspId < correspondences.size(); crspId+=nth)
+      {
+        std::string lineId = id_prefix + std::to_string(crspId);
+        int queryId = correspondences[crspId].index_query;
+        int matchId = correspondences[crspId].index_match;
+        visualizer.addLine(source_points->at(queryId), target_points->at(matchId), lineId);
+        utl::pclvis::Color clr = utl::pclvis::getGlasbeyColor(crspId);
+        utl::pclvis::setLineRenderProps(visualizer, lineId, line_width, clr, opacity);
+      }
+    }
     
     /** \brief DEPRECATED Update the colorbar actor of PCLInteractorStyle
      *  \param[in]  visualizer      visualizer object
