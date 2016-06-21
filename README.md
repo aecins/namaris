@@ -1,4 +1,4 @@
-# cpp_tools
+# Namaris
 A header only library with some useful helper functions for C++ development. Some of the functions:
 - Filesystem path manipulation
 - Simple geometry utilities

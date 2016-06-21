@@ -11,7 +11,7 @@
 #ifndef _C_VECTOR_POINT_SET_
 #define _C_VECTOR_POINT_SET_
 
-#include "PointSet.h"
+#include   <meanshift/PointSet.h>
 
 template<typename T> class CVectorPointSet : public CPointSet<T>{
 

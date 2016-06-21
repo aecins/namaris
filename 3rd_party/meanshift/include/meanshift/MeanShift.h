@@ -18,21 +18,17 @@ Implemented by Raghav Subbarao
 #include <stdio.h>
 #include <string.h>
 
-#include "algorithms/meanshift/geometry/include/Geometry.h"
-#include "algorithms/meanshift/meanshiftlib/include/PointSet.h"
-
-#include <iostream>
-#include <vector>
-#include <algorithm>
+#include <meanshift/Geometry.h>
+#include <meanshift/PointSet.h>
 
 // TODO : add usual distance finding function. Basically make it adaptive ms
 // TODO : add pilot density estimation function
-// #ifndef min
-// #define min(a,b) ((a) <= (b) ? (a) : (b))
-// #endif
-// #ifndef max
-// #define max(a,b) ((a) >= (b) ? (a) : (b))
-// #endif
+#ifndef min
+#define min(a,b) ((a) <= (b) ? (a) : (b))
+#endif
+#ifndef max
+#define max(a,b) ((a) >= (b) ? (a) : (b))
+#endif
 
 #define RSMSMINSTEP 1.0e-7
 #define RSMAXMSITER 200
@@ -106,7 +102,7 @@ public:
 	//|														|//
 	//<---------------------------------------------------->|//
 	//--\\||//--\\||//--\\||//--\\||//--\\||//--\\||//--\\||\*/
-	double doMeanShift(CGeometry<T>& geom, CPointSet<T>& x, CPointSet<T>& modes, std::vector<double> &probs, double frac = 1.0, int jump = 1);
+	double doMeanShift(CGeometry<T>& geom, CPointSet<T>& x, CPointSet<T>& modes, double frac = 1.0, int jump = 1);
 
 	/*\\||//--\\||//--\\||//--\\||//--\\||//--\\||//--\\||\\--/
 	//<---------------------------------------------------->|//
@@ -191,7 +187,7 @@ public:
 	//|														|//
 	//<---------------------------------------------------->|//
 	//--\\||//--\\||//--\\||//--\\||//--\\||//--\\||//--\\||\*/
-	int pruneModes(CGeometry<T>& geom, CPointSet<T>& unprunedModes, CPointSet<T>& prunedModes, std::vector<std::vector<int> > &prunedModeSupport, int minSize, double mindis = 1.0);
+	int pruneModes(CGeometry<T>& geom, CPointSet<T>& unprunedModes, CPointSet<T>& prunedModes, int minSize, double mindis = 1.0);
 
 	void getKernelDensities(CGeometry<T>& geom, CPointSet<T>& x, CPointSet<T>& modes, double *kernelDensities);
 
@@ -243,7 +239,7 @@ template<typename T> CMeanShift<T>::~CMeanShift()
 }
 
 
-template<typename T> double CMeanShift<T>::doMeanShift(CGeometry<T>& geom, CPointSet<T>& x, CPointSet<T>& modes, std::vector<double> &probs, double frac, int jump){
+template<typename T> double CMeanShift<T>::doMeanShift(CGeometry<T>& geom, CPointSet<T>& x, CPointSet<T>& modes, double frac, int jump){
 
 	if(geom.datapointsize() != x.dimension()){
 		printf("Geometry and Data Set not of same size!!!\n");
@@ -257,7 +253,7 @@ template<typename T> double CMeanShift<T>::doMeanShift(CGeometry<T>& geom, CPoin
 	int npoints = x.size();//x.selectPoints(frac, jump);
 	int dim = x.dimension();
 
-	probs.resize(npoints);
+	double *probs = new double[npoints];
 	T *umodes = new T[npoints * dim];
 
 	T *currentPosition	= new T[dim];
@@ -280,28 +276,28 @@ template<typename T> double CMeanShift<T>::doMeanShift(CGeometry<T>& geom, CPoin
 
 		}while (dis > RSMSMINSTEP && iter < RSMAXMSITER);
 
-// 		printf("%03d\t%03d\r", i, iter);
+		printf("%03d\t%03d\r", i, iter);
 
 		// store mode and compute its probability
 		memcpy(umodes + i * dim, currentPosition, sizeof(T) * dim);
 		probs[i] = probability(currentPosition, geom, x);
-	}
-	
-// 	printf("\n");
 
-  // NOTE: this is supposed to sort modes in decreasing order of probability,
-  // but it seems that it always sorts things in a fixed order. Thus this line
-  // is disabled
-// 	sort(umodes, probs, npoints, dim);
+	}
+
+	printf("\n");
+
+	// sort modes in decreasing order...
+	sort(umodes, probs, npoints, dim);
 
 	for(i = 0; i < npoints; i++)
 		modes.addPoint(umodes + i * dim);
 
-	double high = *std::max_element(probs.begin(),probs.end());
+	double high = probs[0];
 
 	delete [] currentPosition;
 	delete [] nextPosition;
 	delete [] umodes;
+	delete [] probs;
 
 	return high;
 
@@ -337,12 +333,8 @@ template<typename T> double CMeanShift<T>::doSingleMeanShift(CGeometry<T>& geom,
 
 }
 
-// This is a greedy procedure to prunne the set of points. Given a set of points
-// it goes through the points one by one. If current point is closer than some
-// minimum distance to one of the existing clusters add that point to the 
-// support of that cluster. Otherwise create a new cluster. Finally remove all
-// clusters who's support is less than some minimal support size.
-template<typename T> int CMeanShift<T>::pruneModes(CGeometry<T>& geom, CPointSet<T>& unprunedModes, CPointSet<T>& prunedModes, std::vector<std::vector<int> > &prunedModeSupport, int minSize, double mindis){
+
+template<typename T> int CMeanShift<T>::pruneModes(CGeometry<T>& geom, CPointSet<T>& unprunedModes, CPointSet<T>& prunedModes, int minSize, double mindis){
 
 	int i, j, dim = unprunedModes.dimension(), n = unprunedModes.size();
 	int flag;
@@ -357,9 +349,7 @@ template<typename T> int CMeanShift<T>::pruneModes(CGeometry<T>& geom, CPointSet
 	memset(tLocalModeSizes, 0, sizeof(int) * n);
 
 	unprunedModes.first();
-  std::vector<std::vector<int> > prunedModeSupport_all (0);
-  prunedModeSupport.resize(0);
-  
+
 	for (i = 0; i < n; i++, ++unprunedModes){
 
 		flag = 1;
@@ -368,7 +358,6 @@ template<typename T> int CMeanShift<T>::pruneModes(CGeometry<T>& geom, CPointSet
 			geom.logm(unprunedModes, tLocalModes + j * dim, m_delta);
 			if ((geom.norm(m_delta) / m_ms_h) < mindis){
 				tLocalModeSizes[j]++;
-        prunedModeSupport_all[j].push_back(i);
 				flag = 0;
 				break;
 			}
@@ -378,16 +367,14 @@ template<typename T> int CMeanShift<T>::pruneModes(CGeometry<T>& geom, CPointSet
 			unprunedModes.getPoint(tLocalModes + tLocalModeCount * dim);
 			tLocalModeSizes[tLocalModeCount]++;
 			tLocalModeCount++;
-      prunedModeSupport_all.push_back(std::vector<int> (0));
-      prunedModeSupport_all.back().push_back(i);
 		}
+
 	}
-	
+
 	for (i = 0; i < tLocalModeCount; i++){
-		if (tLocalModeSizes[i] >= minSize){
-// 			printf("%03d\n", tLocalModeSizes[i]);
+		if (tLocalModeSizes[i] > minSize){
+			printf("%03d\n", tLocalModeSizes[i]);
 			prunedModes.addPoint(tLocalModes + i * dim);
-      prunedModeSupport.push_back(prunedModeSupport_all[i]);
 		}
 	}
 	delete [] tLocalModeSizes;
@@ -487,7 +474,7 @@ template<typename T> void CMeanShift<T>::sort(T* points, double* probs, int n, i
 	int *index = new int[n], i;
 	for(i = 0; i < n; i++)
 		index[i] = i;
-  
+
 	T *spoints = new T[n * d];
 	double *sprobs = new double[n];
 
@@ -500,6 +487,7 @@ template<typename T> void CMeanShift<T>::sort(T* points, double* probs, int n, i
 		probs[n - i - 1] = sprobs[i];
 
 		memcpy(&(points[(n - i - 1) * d]), &(spoints[index[i] * d]), sizeof(T) * d);
+
 	}
 
 	delete [] index;

@@ -1,0 +1,2 @@
+
+#include <meanshift/VectorPointSet.h>

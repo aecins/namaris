@@ -1,0 +1,2 @@
+ADD_SUBDIRECTORY(meanshift)
+# ADD_SUBDIRECTORY(felzenswalb_segmentation)

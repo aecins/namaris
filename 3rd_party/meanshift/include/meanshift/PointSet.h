@@ -41,7 +41,7 @@ public:
 	// d = dimension of data
 	// n = number of points to allocate memory for.
 	// data = data to be copied.
-	CPointSet(int d, int m, int n, const T *data);
+	CPointSet(int d, int m, int n, T *data);
 
 	// Virtual Destructor
 	virtual ~CPointSet();
@@ -64,7 +64,7 @@ public:
 	CPointSet& operator++(){ if(m_ps_loc < m_ps_n - 1) m_ps_loc++; return *this; };
 
 	// move to previous location. prefix operator
-	CPointSet& operator--(){ if(m_ps_loc > 0) m_ps_loc--; return *this;};
+	CPointSet& operator--(){ if(m_ps_loc > 0) m_ps_loc--; };
 
 	// Pointers to current location.
 	// Note: accesses data as is!!!
@@ -174,7 +174,7 @@ public:
 	//|														|//
 	//<---------------------------------------------------->|//
 	//--\\||//--\\||//--\\||//--\\||//--\\||//--\\||//--\\||\*/
-	void setPoint(const T *x, int i = -1){ if(i == -1) i = m_ps_loc; memcpy(m_ps_points + i * m_ps_dim, x, m_ps_dim * sizeof(T)); };
+	void setPoint(T *x, int i = -1){ if(i == -1) i = m_ps_loc; memcpy(m_ps_points + i * m_ps_dim, x, m_ps_dim * sizeof(T)); };
 
 
 
@@ -207,7 +207,7 @@ public:
 	//|														|//
 	//<---------------------------------------------------->|//
 	//--\\||//--\\||//--\\||//--\\||//--\\||//--\\||//--\\||\*/
-	void addPoint(const T *x){ if(m_ps_n < m_ps_nmax) memcpy(m_ps_points + (m_ps_n++) * m_ps_dim, x, sizeof(T) * m_ps_dim); };
+	void addPoint(T *x){ if(m_ps_n < m_ps_nmax) memcpy(m_ps_points + (m_ps_n++) * m_ps_dim, x, sizeof(T) * m_ps_dim); };
 		
 	void addReference(CPointSet& ps);
 	void removeReference();
@@ -312,15 +312,15 @@ m_ps_dim(0), m_ps_m(0), m_ps_n(0), m_ps_nmax(0), m_ps_loc(0), m_ps_refcounter(0)
 {}
 
 template<typename T> CPointSet<T>::CPointSet(int d, int m, int n):
-m_ps_dim(d), m_ps_m(m), m_ps_n(0), m_ps_nmax(n), m_ps_loc(0) , m_ps_refcounter(1)
+m_ps_dim(d), m_ps_m(m), m_ps_nmax(n), m_ps_n(0), m_ps_refcounter(1), m_ps_loc(0)
 {
 
 	m_ps_points = new T[m_ps_nmax * m_ps_dim];
 
 }
 
-template<typename T> CPointSet<T>::CPointSet(int d, int m, int n, const T *data):
-m_ps_dim(d), m_ps_m(m), m_ps_n(n), m_ps_nmax(n), m_ps_loc(0), m_ps_refcounter(1)
+template<typename T> CPointSet<T>::CPointSet(int d, int m, int n, T *data):
+m_ps_dim(d), m_ps_m(m), m_ps_nmax(n), m_ps_n(n), m_ps_refcounter(1), m_ps_loc(0)
 {
 
 	m_ps_points = new T[m_ps_nmax * m_ps_dim];
