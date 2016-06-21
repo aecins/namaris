@@ -5,11 +5,11 @@
 #include <pcl/common/angles.h>
 
 // Utilities
-#include <utilities/geometry.hpp>
-#include <utilities/pointcloud.hpp>
+#include <namaris/utilities/geometry.hpp>
+#include <namaris/utilities/pointcloud.hpp>
 
 // Algorithms
-#include <algorithms/min_cut.hpp>
+#include <namaris/algorithms/min_cut.hpp>
 
 namespace alg
 {

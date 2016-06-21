@@ -7,11 +7,11 @@
 #include <pcl/surface/gp3.h>
 
 // CPP tools
-#include <utilities/std_vector.hpp>
-#include <utilities/pcl_typedefs.hpp>
-#include <utilities/graph.hpp>
-#include <utilities/map.hpp>
-#include <utilities/math.hpp>
+#include <namaris/utilities/std_vector.hpp>
+#include <namaris/utilities/pcl_typedefs.hpp>
+#include <namaris/utilities/graph.hpp>
+#include <namaris/utilities/map.hpp>
+#include <namaris/utilities/math.hpp>
 
 namespace alg
 {

@@ -1,7 +1,7 @@
 #ifndef VIS_HPP_
 #define VIS_HPP_
 
-#include <utilities/pcl_visualization.hpp>
+#include <namaris/utilities/pcl_visualization.hpp>
 
 // State
 struct VisState

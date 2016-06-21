@@ -9,8 +9,8 @@
 #include <Eigen/Dense>
 
 // CPP tools
-#include <utilities/pcl_visualization/color.h>
-#include <utilities/pcl_visualization/vtk_colormaps_lut.hpp>
+#include <namaris/utilities/pcl_visualization/color.h>
+#include <namaris/utilities/pcl_visualization/vtk_colormaps_lut.hpp>
 
 
 namespace utl

@@ -5,7 +5,7 @@
 #include <pcl/common/angles.h>
 
 // Algorithms includes
-#include <algorithms/region_growing/region_growing.hpp>
+#include <namaris/algorithms/region_growing/region_growing.hpp>
 
 namespace alg
 {

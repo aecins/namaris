@@ -5,11 +5,11 @@
 #include <pcl/common/angles.h>
 
 // Utilities
-#include <utilities/geometry.hpp>
-#include <utilities/pointcloud.hpp>
+#include <namaris/utilities/geometry.hpp>
+#include <namaris/utilities/pointcloud.hpp>
 
 // Algorithms
-#include <algorithms/region_growing_normal_variation/region_growing_normal_variation.hpp>
+#include <namaris/algorithms/region_growing_normal_variation/region_growing_normal_variation.hpp>
 
 namespace alg
 {

@@ -11,9 +11,9 @@
 #include <pcl/common/pca.h>
 
 // CPP tools
-#include <utilities/map.hpp>
-#include <utilities/graph.hpp>
-#include <utilities/geometry.hpp>
+#include <namaris/utilities/map.hpp>
+#include <namaris/utilities/graph.hpp>
+#include <namaris/utilities/geometry.hpp>
 
 namespace utl
 {

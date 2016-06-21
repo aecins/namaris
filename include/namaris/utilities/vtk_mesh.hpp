@@ -20,7 +20,7 @@
 #include <eigen3/Eigen/Dense>
 
 // My includes
-#include <utilities/graph.hpp>
+#include <namaris/utilities/graph.hpp>
 
 // PCL includes
 #include <pcl/io/vtk_lib_io.h>

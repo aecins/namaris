@@ -10,8 +10,8 @@
 #include <boost/regex.hpp>
 
 // Other
-#include <utilities/string.hpp>
-#include <utilities/alphanum/alphanum.hpp>
+#include <namaris/utilities/string.hpp>
+#include <namaris/utilities/alphanum/alphanum.hpp>
 
 namespace utl
 {

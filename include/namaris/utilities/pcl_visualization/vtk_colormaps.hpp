@@ -1,7 +1,7 @@
 #ifndef VTK_COLORMAPS_HPP
 #define VTK_COLORMAPS_HPP
 
-#include <utilities/pcl_visualization/vtk_colormaps.h>
+#include <namaris/utilities/pcl_visualization/vtk_colormaps.h>
 
 namespace utl
 {

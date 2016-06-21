@@ -14,7 +14,7 @@
 #include <pcl/common/colors.h>
 
 // CPP tools
-#include <utilities/pcl_visualization/color.h>
+#include <namaris/utilities/pcl_visualization/color.h>
 
 namespace utl
 {  

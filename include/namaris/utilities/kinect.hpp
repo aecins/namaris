@@ -17,8 +17,8 @@
 #include <pcl/point_types.h>
 
 // Utilities
-#include <utilities/filesystem.hpp>
-#include <utilities/std_vector.hpp>
+#include <namaris/utilities/filesystem.hpp>
+#include <namaris/utilities/std_vector.hpp>
 
 namespace utl
 {

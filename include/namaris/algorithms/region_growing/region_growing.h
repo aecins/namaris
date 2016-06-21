@@ -6,8 +6,8 @@
 #include <pcl/search/pcl_search.h>
 
 // Utilities includes
-#include <utilities/std_vector.hpp>
-#include <utilities/math.hpp>
+#include <namaris/utilities/std_vector.hpp>
+#include <namaris/utilities/math.hpp>
 
 namespace alg
 {

@@ -7,9 +7,9 @@
 #include <pcl/search/kdtree.h>
 
 // Utilities
-#include <utilities/math.hpp>
-#include <utilities/geometry.hpp>
-#include <utilities/std_vector.hpp>
+#include <namaris/utilities/math.hpp>
+#include <namaris/utilities/geometry.hpp>
+#include <namaris/utilities/std_vector.hpp>
 
 namespace alg
 {

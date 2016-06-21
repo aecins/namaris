@@ -13,12 +13,12 @@
 #include <vtkActor2DCollection.h>
 
 // CPP Tools
-#include <utilities/std_vector.hpp>
-#include <utilities/graph.hpp>
-#include <utilities/map.hpp>
-#include <utilities/geometry.hpp>
-#include <utilities/pcl_visualization/color.hpp>
-#include <utilities/pcl_visualization/vtk_colormaps.hpp>
+#include <namaris/utilities/std_vector.hpp>
+#include <namaris/utilities/graph.hpp>
+#include <namaris/utilities/map.hpp>
+#include <namaris/utilities/geometry.hpp>
+#include <namaris/utilities/pcl_visualization/color.hpp>
+#include <namaris/utilities/pcl_visualization/vtk_colormaps.hpp>
 
 namespace utl
 {

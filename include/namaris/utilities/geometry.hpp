@@ -5,7 +5,7 @@
 #include <iostream>
 
 // CPP tools utilities
-#include <utilities/math.hpp>
+#include <namaris/utilities/math.hpp>
 
 namespace utl
 {

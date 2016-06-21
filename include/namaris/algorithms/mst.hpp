@@ -7,7 +7,7 @@
 #include <boost/graph/connected_components.hpp>
 
 // CPP Tools
-#include <utilities/graph.hpp>
+#include <namaris/utilities/graph.hpp>
 
 namespace alg
 {
