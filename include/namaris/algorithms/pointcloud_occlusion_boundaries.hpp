@@ -64,7 +64,7 @@ namespace alg
       for (size_t neighbourId = 0; neighbourId < projectedNeighbours.size(); neighbourId++)
       {
         Eigen::Vector3f currentVector = projectedNeighbours[neighbourId] - planePoint;
-        float curAngle = utl::geom::vectorAngleSigned<float>(referenceVector, currentVector, planeNormal);
+        float curAngle = utl::geom::vectorAngleCW<float>(referenceVector, currentVector, planeNormal);
         angles[neighbourId] = curAngle;
 
       }
@@ -74,9 +74,9 @@ namespace alg
       std::vector<float> angleDifference(angles.size());
       for (size_t i = 1; i < angles.size(); i++)
       {
-        angleDifference[i] = utl::geom::angleDifferenceCCw<float>(angles[i-1], angles[i]);
+        angleDifference[i] = utl::geom::angleDifferenceCCW<float>(angles[i-1], angles[i]);
       }
-      angleDifference[0] = utl::geom::angleDifferenceCCw<float>(angles[angles.size()-1], angles[0]);
+      angleDifference[0] = utl::geom::angleDifferenceCCW<float>(angles[angles.size()-1], angles[0]);
       
       // If maximum difference is bigger than threshold mark point as boundary point
       if (utl::stdvec::vectorMax(angleDifference) > max_angle)
