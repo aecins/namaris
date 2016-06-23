@@ -1,0 +1,7 @@
+################################################################################
+# Compute paths
+get_filename_component(Namaris_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+
+set( Namaris_INCLUDE_DIR  "@Namaris_INCLUDE_DIR@" )
+set( Namaris_INCLUDE_DIRS  "@Namaris_INCLUDE_DIR@" )
+
