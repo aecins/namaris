@@ -11,6 +11,18 @@ namespace utl
 {
   namespace str
   {
+    /** \brief Convert a decimal number to a string of fixed length with zero padding on the left.
+     *  \param[in] decimal_number number to convert to string
+     *  \param[in] decimal_places number of decimal places for a floating point number
+     */
+    template <typename T> inline
+    std::string to_padded_string (const  T decimal_number, const unsigned int padded_width = 6)
+    {
+      std::ostringstream out;
+      out << std::setfill('0') << std::setw(padded_width);
+      out << decimal_number;
+      return out.str();
+    }
     /** \brief Convert a number to a string
      *  \param[in] number string which is modified
      *  \param[in] decimal_places number of decimal places for a floating point number
