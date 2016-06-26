@@ -14,9 +14,6 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/" ${CMAKE_MODULE_PATH})
 include(install_package)
 set(${PROJECT_NAME}_INCLUDE_DIR "include")
 
-# Install 3rd party
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/3rd_party")
-
 # Install library
 install_package(
         PKG_NAME ${PROJECT_NAME}
