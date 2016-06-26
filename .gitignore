@@ -42,8 +42,8 @@ build
 lib
 
 # Kdevelop
-*.kdev
-.kdev
+*.kdev4
+.kdev4
 
 # CLion
 .idea
