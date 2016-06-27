@@ -1,0 +1,20 @@
+# ===================================================================================
+#  The Namaris CMake configuration file
+#
+#             ** File generated automatically, do not modify **
+#
+#  Usage from an external project:
+#    In your CMakeLists.txt, add these lines:
+#
+#    FIND_PACKAGE(namaris REQUIRED )
+#    INCLUDE_DIRECTORIES(${NAMARIS_INCLUDE_DIRS})
+#
+#
+#    This file will define the following variables:
+#      - NAMARIS_INCLUDE_DIRS   : The Namaris include directories.
+#
+# ===================================================================================
+
+@PACKAGE_INIT@
+
+set_and_check(NAMARIS_INCLUDE_DIRS "@PACKAGE_NAMARIS_INCLUDE_DIRS@")
