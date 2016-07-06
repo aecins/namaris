@@ -279,6 +279,7 @@ namespace utl
     protected:
       using pcl::PCLBase<PointT>::input_;
       using pcl::PCLBase<PointT>::indices_;
+      using pcl::PCLBase<PointT>::fake_indices_;
       using pcl::PCLBase<PointT>::initCompute;
       using pcl::PCLBase<PointT>::deinitCompute;
       
@@ -311,6 +312,8 @@ namespace utl
       {
         pcl::PCLBase<PointT>::setInputCloud (cloud);
         resetComputation ();
+        if (fake_indices_)
+          indices_->clear();
       }
       
       /** \brief Set coefficients of the plane to which the points will be projected. */            
@@ -707,24 +710,26 @@ namespace utl
                           float scale_factor,
                           typename pcl::PointCloud<T> &cloud_out)
     {
+      // Copy pointcloud. This is required to preserve all other fields (e.g. normals)
+      pcl::copyPointCloud(cloud_in, cloud_out);
+      
+      // Compute 3D centroud
       Eigen::Vector4f centroid;
       pcl::compute3DCentroid<T>(cloud_in, centroid);
       
-      cloud_out.resize(cloud_in.size());
-      
       for (size_t i = 0; i < cloud_in.size(); i++)
       {
-        cloud_out.points[i].x = (cloud_in.points[i].x - centroid[0]) * scale_factor + centroid[0];
-        cloud_out.points[i].y = (cloud_in.points[i].y - centroid[1]) * scale_factor + centroid[1];
-        cloud_out.points[i].z = (cloud_in.points[i].z - centroid[2]) * scale_factor + centroid[2];
+        cloud_out.points[i].x = (cloud_out.points[i].x - centroid[0]) * scale_factor + centroid[0];
+        cloud_out.points[i].y = (cloud_out.points[i].y - centroid[1]) * scale_factor + centroid[1];
+        cloud_out.points[i].z = (cloud_out.points[i].z - centroid[2]) * scale_factor + centroid[2];
       }
     }
     
     /** \brief Given two pointclouds find the closest point between them
      *  \param[in]  cloud1             first cloud
      *  \param[in]  cloud2             second cloud
-     *  \param[out] search_tree1       KD tree for first cloud
-     *  \param[out] search_tree2       KD tree for second cloud
+     *  \param[in]  search_tree1       KD tree for first cloud
+     *  \param[in]  search_tree2       KD tree for second cloud
      *  \param[out] closest_point_1    closest point in the first cloud
      *  \param[out] closest_point_2    closest point in the second cloud
      *  \return distance between two clouds
@@ -735,8 +740,8 @@ namespace utl
                                   const pcl::PointCloud<PointT> &cloud2,
                                   const pcl::search::KdTree<PointT> search_tree1,
                                   const pcl::search::KdTree<PointT> search_tree2,
-                                  int closest_point_1,
-                                  int closest_point_2
+                                  int &closest_point_1,
+                                  int &closest_point_2
                                 )
     {
       // Prepare variables

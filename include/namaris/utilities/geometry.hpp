@@ -350,8 +350,8 @@ namespace utl
     vectorAngleCW (const Eigen::Matrix< Scalar, 3, 1> &v1, const Eigen::Matrix< Scalar, 3, 1> &v2, const Eigen::Matrix< Scalar, 3, 1> &normal)
     {
       Scalar cos = v1.dot(v2);
-      Scalar sin = math::clampValue<Scalar>(normal.dot(v1.cross(v2)), -1.0, 1.0);
-      return std::atan2(sin, cos);
+      Scalar sin = math::clampValue<Scalar> (normal.dot (v1.cross (v2)), -1.0, 1.0);
+      return std::atan2 (sin, cos);
     }
         
     /** \brief Get counter clockwise difference between two angles (in radians)

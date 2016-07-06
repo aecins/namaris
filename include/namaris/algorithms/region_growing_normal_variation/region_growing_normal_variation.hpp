@@ -68,17 +68,15 @@ alg::RegionGrowingNormalVariation<PointT>::reorderIndicesCurvature ()
       (*indices_)[pointId] = pointId;
   }
   
-  // Reorder indices according to curvature
+  // Extract curvature values into a vector
   std::vector<float> curvature (indices_->size());
   for (size_t pointIdIt = 0; pointIdIt < indices_->size(); pointIdIt++)
     curvature[pointIdIt] = input_->points[(*indices_)[pointIdIt]].curvature;
-  
+    
   // Reorder indices in increasing order of curvature
   std::vector<float> curvature_sorted;
   std::vector<size_t> order;
-  
   utl::stdvec::sort(curvature, curvature_sorted, order, utl::stdvec::ASCENDING);
-  
   *indices_ = utl::stdvec::reorder(*indices_, order);  
 }
 

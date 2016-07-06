@@ -63,6 +63,7 @@ namespace utl
     /** \brief Write matrix to a file in ASCII mode.
      *  \param filename output file name
      *  \param matrix matrix
+     *  \return TRUE if file written successfully
      */
     template<class Matrix>
     inline
@@ -85,6 +86,7 @@ namespace utl
     /** \brief Read a matrix from an ASCII file.
      *  \param filename input file name
      *  \param matrix matrix
+     *  \return TRUE if file read successfully
      *  \note Adapted from http://perso.ensta-paristech.fr/~stulp/dmpbbo/EigenFileIO_8tpp_source.html
      */  
     template<class Matrix>

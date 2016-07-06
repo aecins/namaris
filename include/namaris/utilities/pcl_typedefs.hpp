@@ -18,20 +18,20 @@ typedef pcl::PointXYZRGBA PointCA;
 typedef pcl::PointXYZRGBNormal PointNC;
 typedef pcl::PointXYZL PointL;
 
-bool operator== (const PointN &lhs, const PointN &rhs)
-{
-  return (  lhs.x == rhs.x  && 
-            lhs.y == rhs.y  &&
-            lhs.z == rhs.z  &&
-            lhs.normal_x == rhs.normal_x  &&
-            lhs.normal_y == rhs.normal_y  &&
-            lhs.normal_z == rhs.normal_z
-          );
-}
-
-bool operator!= (const PointN &lhs, const PointN &rhs)
-{
-  return !(lhs == rhs);
-}
+// bool operator== (const PointN &lhs, const PointN &rhs)
+// {
+//   return (  lhs.x == rhs.x  && 
+//             lhs.y == rhs.y  &&
+//             lhs.z == rhs.z  &&
+//             lhs.normal_x == rhs.normal_x  &&
+//             lhs.normal_y == rhs.normal_y  &&
+//             lhs.normal_z == rhs.normal_z
+//           );
+// }
+// 
+// bool operator!= (const PointN &lhs, const PointN &rhs)
+// {
+//   return !(lhs == rhs);
+// }
 
 #endif  // PCL_TYPEDEFS_HPP
