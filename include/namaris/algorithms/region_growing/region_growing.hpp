@@ -62,6 +62,15 @@ alg::RegionGrowing<PointT>::~RegionGrowing ()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT> inline void
+alg::RegionGrowing<PointT>::setInputCloud (const PointCloudConstPtr &cloud)
+{
+  pcl::PCLBase<PointT>::setInputCloud (cloud);
+  if (fake_indices_)
+    indices_->clear ();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+template <typename PointT> inline void
 alg::RegionGrowing<PointT>::setUnaryConditionFunction (bool (*unary_condition_function) (const PointT&)) 
 {
   unary_condition_function_ = unary_condition_function;

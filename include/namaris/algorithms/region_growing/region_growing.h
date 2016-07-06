@@ -40,15 +40,25 @@ namespace alg
 
       using pcl::PCLBase<PointT>::input_;
       using pcl::PCLBase<PointT>::indices_;
+      using pcl::PCLBase<PointT>::fake_indices_;
       using pcl::PCLBase<PointT>::initCompute;
       using pcl::PCLBase<PointT>::deinitCompute;
 
+    public:
+      typedef pcl::PointCloud<PointT> PointCloud;
+      typedef typename PointCloud::Ptr PointCloudPtr;
+      typedef typename PointCloud::ConstPtr PointCloudConstPtr;
+      
     public:
       /** \brief Constructor */
       RegionGrowing ();
       
       /** \brief Constructor */
-      ~RegionGrowing ();      
+      ~RegionGrowing ();
+      
+      /** \brief Provide a pointer to the input cloud. */
+      void
+      setInputCloud (const PointCloudConstPtr &cloud);
 
       /** \brief Set condition function that needs to be satisfied for a point to belong to a cluster */
       inline void
