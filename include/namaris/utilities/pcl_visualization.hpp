@@ -241,65 +241,7 @@ namespace utl
       pcl::visualization::PointCloudColorHandlerCustomData<PointT, float> color_handler (cloud, data);      
       visualizer.addPointCloud<PointT> (cloud, color_handler, id);
       setPointCloudRenderProps(visualizer, id, point_size);
-    }    
-    
-    /** \brief DEPRECATED Visualize a pointcloud colored according to the scalar data vector
-      * \param[in]  visualizer    visualizer object
-      * \param[in]  cloud         pointcloud
-      * \param[in]  data          data vector
-      * \param[in,out]  colormap  colormap object (if range limits are equal to NaN they are updated to min max of the data vector)
-      * \param[in]  id            the point cloud object id (default: cloud_seg)
-      * \param[in]  point_size    size of the point (default 1.0)
-      */    
-    template <typename PointT, typename Scalar>
-    inline
-    void showPointCloudWithData ( pcl::visualization::PCLVisualizer &visualizer,
-                                  const typename pcl::PointCloud<PointT>::ConstPtr &cloud,
-                                  const Eigen::Matrix<Scalar, 1, Eigen::Dynamic> &data,
-                                  Colormap &colormap,
-                                  const std::string &id = "cloud",
-                                  const float point_size = -1.0
-                                )
-    {
-      Colors colors = colormap.getColorsFromData<Scalar>(data);
-      std::vector<std::vector<double> > colors_stdvec (colors.size());
-      for (size_t cId = 0; cId < colors.size(); cId++)
-        colors_stdvec[cId] = colors[cId].toStdVec();
-      
-      pcl::visualization::PointCloudColorHandlerCustomIndividual<PointT> color_handler (cloud, colors_stdvec);
-
-      visualizer.addPointCloud<PointT> (cloud, color_handler, id);
-      setPointCloudRenderProps(visualizer, id, point_size);
     }
-    
-    /** \brief DEPRECATED Visualize a pointcloud colored according to the scalar data vector
-      * \param[in]  visualizer    visualizer object
-      * \param[in]  cloud         pointcloud
-      * \param[in]  data          data vector
-      * \param[in,out]  colormap  colormap object (if range limits are equal to NaN they are updated to min max of the data vector)
-      * \param[in]  id            the point cloud object id (default: cloud_seg)
-      * \param[in]  point_size    size of the point (default 1.0)
-      */    
-    template <typename PointT, typename Scalar>
-    inline
-    void showPointCloudWithData ( pcl::visualization::PCLVisualizer &visualizer,
-                                  const typename pcl::PointCloud<PointT>::ConstPtr &cloud,
-                                  const std::vector<Scalar> &data,
-                                  Colormap &colormap,
-                                  const std::string &id = "cloud",
-                                  const float point_size = -1.0
-                                )
-    {
-      Colors colors = colormap.getColorsFromData<Scalar>(data);
-      std::vector<std::vector<double> > colors_stdvec (colors.size());
-      for (size_t cId = 0; cId < colors.size(); cId++)
-        colors_stdvec[cId] = colors[cId].toStdVec();
-      
-      pcl::visualization::PointCloudColorHandlerCustomIndividual<PointT> color_handler (cloud, colors_stdvec);
-
-      visualizer.addPointCloud<PointT> (cloud, color_handler, id);
-      setPointCloudRenderProps(visualizer, id, point_size);
-    }    
     
     /** \brief Show pointcloud normals
      *  \param[in]  visualizer  visualizer object
