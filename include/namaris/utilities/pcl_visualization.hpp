@@ -12,13 +12,13 @@
 #include <vtkScalarBarActor.h>
 #include <vtkActor2DCollection.h>
 
-// CPP Tools
+// Utilities
 #include <namaris/utilities/std_vector.hpp>
 #include <namaris/utilities/graph.hpp>
 #include <namaris/utilities/map.hpp>
 #include <namaris/utilities/geometry.hpp>
 #include <namaris/utilities/pcl_visualization/color.hpp>
-#include <namaris/utilities/pcl_visualization/vtk_colormaps.hpp>
+// #include <namaris/utilities/pcl_visualization/vtk_colormaps.hpp>
 
 namespace utl
 {
@@ -152,7 +152,7 @@ namespace utl
       if (range_auto)
         visualizer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_LUT_RANGE, pcl::visualization::PCL_VISUALIZER_LUT_RANGE_AUTO, id);
       else if (!std::isnan(range_min) and !std::isnan(range_max))
-        visualizer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_LUT_RANGE, range_min, range_max, "cloud");
+        visualizer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_LUT_RANGE, range_min, range_max, id);
     }    
     
     //----------------------------------------------------------------------------
@@ -774,30 +774,30 @@ namespace utl
      *  \param[in] id_prefix prefix to be used for line objects (default: adj_line_)
      *  \param[in] line_width width of the lines used for display (default 1.0)
      */  
-    template <typename PointT>
-    inline
-    void showPointGraphWeighted ( pcl::visualization::PCLVisualizer &visualizer,
-                                  const pcl::PointCloud<PointT> &points,
-                                  const std::vector<std::pair<int, int> > &edges,
-                                  const std::vector<float> &edge_weights,
-                                  Colormap &colormap,
-                                  const std::string &id_prefix = "edge",
-                                  const float line_width = -1.0
-                       )
-    {
-      // Get colors
-      Colors colors = colormap.getColorsFromData<float>(edge_weights);
-
-      // Display graphs
-      for (size_t edgeId = 0; edgeId < edges.size(); edgeId++)
-      {
-        int sourceVtxId = edges[edgeId].first;
-        int targetVtxId = edges[edgeId].second;
-        std::string id_string = id_prefix + std::to_string(edgeId) + "_"  + std::to_string(edgeId);
-        visualizer.addLine(points.points[sourceVtxId], points.points[targetVtxId], id_string);
-        setLineRenderProps(visualizer, id_string, line_width, colors[edgeId]);
-      }
-    }
+//     template <typename PointT>
+//     inline
+//     void showPointGraphWeighted ( pcl::visualization::PCLVisualizer &visualizer,
+//                                   const pcl::PointCloud<PointT> &points,
+//                                   const std::vector<std::pair<int, int> > &edges,
+//                                   const std::vector<float> &edge_weights,
+//                                   Colormap &colormap,
+//                                   const std::string &id_prefix = "edge",
+//                                   const float line_width = -1.0
+//                        )
+//     {
+//       // Get colors
+//       Colors colors = colormap.getColorsFromData<float>(edge_weights);
+// 
+//       // Display graphs
+//       for (size_t edgeId = 0; edgeId < edges.size(); edgeId++)
+//       {
+//         int sourceVtxId = edges[edgeId].first;
+//         int targetVtxId = edges[edgeId].second;
+//         std::string id_string = id_prefix + std::to_string(edgeId) + "_"  + std::to_string(edgeId);
+//         visualizer.addLine(points.points[sourceVtxId], points.points[targetVtxId], id_string);
+//         setLineRenderProps(visualizer, id_string, line_width, colors[edgeId]);
+//       }
+//     }
     
     /** \brief DEPRECATED Visualize a weighted graph defined on points in 3D space
      *  \param[in] visualizer visualizer object
@@ -807,25 +807,25 @@ namespace utl
      *  \param[in] id_prefix prefix to be used for line objects (default: adj_line_)
      *  \param[in] line_width width of the lines used for display (default 1.0)
      */  
-    template <typename PointT>
-    inline
-    void showPointGraphWeighted ( pcl::visualization::PCLVisualizer &visualizer,
-                                  const pcl::PointCloud<PointT> &points,
-                                  const utl::graph::Graph &graph,
-                                  const utl::graph::GraphWeights &graph_weights,
-                                  Colormap &colormap,
-                                  const std::string &id_prefix = "edge",
-                                  const float line_width = -1.0
-                       )
-    {
-      // Get graph edges and their weights
-      std::vector<std::pair<int, int> > edges;
-      std::vector<float> edgeWeights;
-      utl::graph::graphWeighted2EdgePairs(graph, graph_weights, edges, edgeWeights);
-      
-      // Visualize
-      showPointGraphWeighted<PointT>(visualizer, points, edges, edgeWeights, colormap, id_prefix, line_width);
-    }  
+//     template <typename PointT>
+//     inline
+//     void showPointGraphWeighted ( pcl::visualization::PCLVisualizer &visualizer,
+//                                   const pcl::PointCloud<PointT> &points,
+//                                   const utl::graph::Graph &graph,
+//                                   const utl::graph::GraphWeights &graph_weights,
+//                                   Colormap &colormap,
+//                                   const std::string &id_prefix = "edge",
+//                                   const float line_width = -1.0
+//                        )
+//     {
+//       // Get graph edges and their weights
+//       std::vector<std::pair<int, int> > edges;
+//       std::vector<float> edgeWeights;
+//       utl::graph::graphWeighted2EdgePairs(graph, graph_weights, edges, edgeWeights);
+//       
+//       // Visualize
+//       showPointGraphWeighted<PointT>(visualizer, points, edges, edgeWeights, colormap, id_prefix, line_width);
+//     }  
     
     /** \brief visualize a 3d curve represented as an ordered set of points
      *  \param[in]  visualizer  visualizer object
@@ -1009,48 +1009,48 @@ namespace utl
      *  \param[in]  visualizer      visualizer object
      *  \param[in]  colormap        colormap object
      */    
-    inline
-    bool updateColorbar ( pcl::visualization::PCLVisualizer &visualizer,
-                          const Colormap &colormap
-                      )
-    {
-      // Create LUT
-      vtkSmartPointer<vtkLookupTable> colormapLUT = colormap.getColorLookupTable();
-      
-      // Update colorbar
-      vtkSmartPointer<pcl::visualization::PCLVisualizerInteractorStyle> interactorStyle = visualizer.getInteractorStyle();
-      vtkRenderer *curRenderer = interactorStyle->GetCurrentRenderer();
-      if (curRenderer != nullptr)
-      {
-        // Get 2D actors
-        vtkActor2DCollection *curActors = curRenderer->GetActors2D();
-        
-        // Loop over actors and find the colorbar actor
-        curActors->InitTraversal();
-        for (size_t i = 0; i < static_cast<size_t>(curActors->GetNumberOfItems()); i++)
-        {
-          vtkActor2D *curActor = curActors->GetNextActor2D();
-          if (!curActor->IsA("vtkScalarBarActor"))
-            continue;
-          
-          // Update the LUT table
-          vtkScalarBarActor *colorbarActor = vtkScalarBarActor::SafeDownCast(curActor);
-          colorbarActor->SetLookupTable(colormapLUT);
-          
-          return true;
-        }
-          
-        std::cout <<
-          "[pcl::updateColorbar] Could not find 'vtkLookupTable' actor in current renderer. \
-          This probably means that colorbar was not being displayed when this function was called" << std::endl;
-      }
-      else
-      {
-        std::cout << "[pcl::updateColorbar] CurrentRenderer does not exist yet" << std::endl;      
-      }
-      
-      return false;
-    }
+//     inline
+//     bool updateColorbar ( pcl::visualization::PCLVisualizer &visualizer,
+//                           const Colormap &colormap
+//                       )
+//     {
+//       // Create LUT
+//       vtkSmartPointer<vtkLookupTable> colormapLUT = colormap.getColorLookupTable();
+//       
+//       // Update colorbar
+//       vtkSmartPointer<pcl::visualization::PCLVisualizerInteractorStyle> interactorStyle = visualizer.getInteractorStyle();
+//       vtkRenderer *curRenderer = interactorStyle->GetCurrentRenderer();
+//       if (curRenderer != nullptr)
+//       {
+//         // Get 2D actors
+//         vtkActor2DCollection *curActors = curRenderer->GetActors2D();
+//         
+//         // Loop over actors and find the colorbar actor
+//         curActors->InitTraversal();
+//         for (size_t i = 0; i < static_cast<size_t>(curActors->GetNumberOfItems()); i++)
+//         {
+//           vtkActor2D *curActor = curActors->GetNextActor2D();
+//           if (!curActor->IsA("vtkScalarBarActor"))
+//             continue;
+//           
+//           // Update the LUT table
+//           vtkScalarBarActor *colorbarActor = vtkScalarBarActor::SafeDownCast(curActor);
+//           colorbarActor->SetLookupTable(colormapLUT);
+//           
+//           return true;
+//         }
+//           
+//         std::cout <<
+//           "[pcl::updateColorbar] Could not find 'vtkLookupTable' actor in current renderer. \
+//           This probably means that colorbar was not being displayed when this function was called" << std::endl;
+//       }
+//       else
+//       {
+//         std::cout << "[pcl::updateColorbar] CurrentRenderer does not exist yet" << std::endl;      
+//       }
+//       
+//       return false;
+//     }
     
     /** \brief show a visualization of camera view frustum
      *  \param[in]  visualizer      visualizer object
