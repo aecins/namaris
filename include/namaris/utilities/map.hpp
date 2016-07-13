@@ -22,6 +22,7 @@ namespace utl
      *  \param[in]  map  input map
      *  \return     domain maximum element id
      */
+    inline
     int domainMax (const Map &map)
     {
       return map.size();
@@ -31,6 +32,7 @@ namespace utl
      *  \param[in]  map  input map
      *  \return     domain maximum element id
      */
+    inline
     int rangeMax (const Map &map)
     {
       int maxId = 0;
@@ -45,6 +47,7 @@ namespace utl
      *  \param[in]  map  input map
      *  \return     domain minimum element id
      */
+    inline
     int rangeMin (const Map &map)
     {
       int minId = 0;
@@ -60,6 +63,7 @@ namespace utl
      *  \param[in]  map input map
      *  \return     true if map is injective
      */
+    inline
     bool isInjective (const Map &map)
     {
       // If any of the mapped values correspond to 
@@ -74,6 +78,7 @@ namespace utl
      *  \param[in]  map input map
      *  \return     domain maximum element id
      */
+    inline
     Map invertMap (const Map &map)
     {
       // Initialize map
@@ -106,6 +111,7 @@ namespace utl
      *  \param[in]  check_injective bool indicating whether to check if input mapping is injective
      *  \return     mapped vector
      */
+    inline
     std::vector<int> remapVector (const std::vector<int> &v, const Map &map, bool check_injective = true)
     { 
       // First check that remapping is possible
@@ -152,6 +158,7 @@ namespace utl
      *  \param[in]  map map used for remapping
      *  \return     remapped source map
      */
+    inline
     std::vector<std::vector<int> > remapMap (const Map &map_src, const Map &map)
     { 
       // First check that remapping is possible
