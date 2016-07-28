@@ -11,12 +11,29 @@ namespace utl
 {
   namespace graph
   {
-    /** \brief Graph datastructure represented as a vector of vectors. The indices of the 
-     * outer vector correspond to the indices of the vertices in the graph. The 
-     * the inner graph correspond to the indices of the vertices that the outter 
-     * indices of index vertex is connected to.
-     */  
+    /** \brief Data structure representing a graph. Graph is stored as as a
+     * vector of vectors. The indices of the outer vector correspond to the
+     * indices of the vertices in the graph. The the inner graph correspond to
+     * the indices of the vertices that the outter indices of index vertex is
+     * connected to.
+     */
     typedef std::vector<std::vector<int> > Graph;
+    
+    /** \brief Data structure representing the weights of the graph edges. */
+    typedef std::vector<std::vector<float> > GraphWeights;
+    
+    /** \brief Data structure representing an edge. Edge is stored as a pair of 
+     * integers corresponding to the indices of the vertices that the edge is 
+     * connecting.
+     */    
+    typedef std::pair<int,int> Edge;
+    
+    /** \brief A vector of edges. */
+    typedef std::vector<Edge> Edges;
+
+    /** \brief A vector of edge weights. */
+    typedef std::vector<float> EdgeWeights;
+
     
     /** \brief Add edge to the graph
      *  \param[in] v1    index of first vertex
@@ -85,15 +102,15 @@ namespace utl
         }
       }    
     }  
-    
-    /** \brief Convert graph to a vector of pairs representing edges
-     *  \param[in]       g         corresponding graph
-     *  \return vector of pairs where each pair represents an edge
+
+    /** \brief Convert a graph to a vector edges.
+     *  \param[in]  g   corresponding graph
+     *  \return vector of edges
      */
     inline
-    std::vector<std::pair<int,int> > graph2EdgePairs (const Graph &g)
+    Edges graph2Edges (const Graph &g)
     {
-      std::vector<std::pair<int,int> > edgePairs;
+      Edges edges;
       
       for (size_t sourceId = 0; sourceId < g.size(); sourceId++)
       {
@@ -101,26 +118,25 @@ namespace utl
         {
           int targetId = g[sourceId][targetIdIt];
           if (static_cast<size_t>(targetId) > sourceId)
-            edgePairs.push_back(std::pair<int,int>(sourceId, targetId));
+            edges.push_back(Edge(sourceId, targetId));
         }
       }
       
-      return edgePairs;
+      return edges;
     }
 
-    /** \brief Given a set of vertices in a graph find all adjacent vertices of 
-     *  the input vertices and return edges connecting input edges to adjacent 
-     *  edges. Note that none of the input vertices can be in the set of 
-     *  adjacent vertices.
+    /** \brief Given a set of input vertices in a graph find all adjacent
+     * vertices and return edges connecting input edges to adjacent edges. Note
+     * that none of the input vertices can be in the set of adjacent vertices.
      *  \param[in] g graph
      *  \param[in] v input vertices
-     *  \return vector of pairs where each pair represents an edge
+     *  \return vector of edges
      */
     inline
-    std::vector<std::pair<int,int> > getAdjacentVertexEdges (const Graph &g, const std::vector<int> &v)
+    Edges getAdjacentVertexEdges (const Graph &g, const std::vector<int> &v)
     {
       // Find all edges between segment and it's neighbours
-      std::vector<std::pair<int,int> > nighbour_edges;
+      Edges nighbour_edges;
       std::vector<int>::const_iterator v1It = v.begin();
       for ( ; v1It != v.end(); v1It++)
       {
@@ -130,7 +146,7 @@ namespace utl
           // Check if it is a neighbour segment
           if(std::find(v.begin(), v.end(), *v2It) == v.end())
           {
-            nighbour_edges.push_back(std::pair<int,int> (*v1It, *v2It));
+            nighbour_edges.push_back(Edge(*v1It, *v2It));
           }
         }
       }
@@ -138,18 +154,17 @@ namespace utl
       return nighbour_edges;
     }
 
-    /** \brief Given a set of vertices in a graph return all edges belonging to
-     *  the cut between the input set of vertices and the rest of the vertices 
-     *  in the graph.
+    /** \brief Given a set of vertices in a graph return all edges between
+     * the input set of vertices and the rest of the vertices in the graph.
      *  \param[in] g graph
      *  \param[in] v input vertices
      *  \return edges belonging to the cut
      */
     inline
-    std::vector<std::pair<int,int> > getCutEdges (const Graph &g, const std::vector<int> &v)
+    Edges getCutEdges (const Graph &g, const std::vector<int> &v)
     {
       // Find all edges between segment and it's neighbours
-      std::vector<std::pair<int,int> > cut_edges;
+      Edges cut_edges;
       std::vector<int>::const_iterator v1It = v.begin();
       for ( ; v1It != v.end(); v1It++)
       {
@@ -159,7 +174,7 @@ namespace utl
           // Check if it is a neighbour segment
           if(std::find(v.begin(), v.end(), *v2It) == v.end())
           {
-            cut_edges.push_back(std::pair<int,int> (*v1It, *v2It));
+            cut_edges.push_back(Edge (*v1It, *v2It));
           }
         }
       }
@@ -171,13 +186,13 @@ namespace utl
      *  subgraph formed by these vertices.
      *  \param[in] g graph
      *  \param[in] v subgraph vertices
-     *  \return vector of pairs where each pair represents an edge in the subgraph
+     *  \return vector of edges
      */
     inline
-    std::vector<std::pair<int,int> > getSubgraphEdges (const Graph &g, const std::vector<int> &v)
+    Edges getSubgraphEdges (const Graph &g, const std::vector<int> &v)
     {
       // Find all edges between segment and it's neighbours
-      std::vector<std::pair<int,int> > subgraph_edges;
+      Edges subgraph_edges;
       std::vector<int>::const_iterator v1It = v.begin();
       for ( ; v1It != v.end(); v1It++)
       {
@@ -187,7 +202,7 @@ namespace utl
           // Check if it is a neighbour segment
           if(std::find(v.begin(), v.end(), *v2It) != v.end())
           {
-            subgraph_edges.push_back(std::pair<int,int> (*v1It, *v2It));
+            subgraph_edges.push_back(Edge (*v1It, *v2It));
           }
         }
       }
@@ -331,11 +346,7 @@ namespace utl
       
       return *std::max_element(paths.begin(), paths.end(), [](std::vector<int> p1, std::vector<int> p2) {return p1.size() < p2.size();});
     }
-    
-    /** Datastructure holding the weights of the edges in an adjacency list
-    */
-    typedef std::vector<std::vector<float> > GraphWeights;
-    
+        
     /** \brief Create an empty graph weight datastructure with the same 
      *  dimensionality as a prototype graph.
      *  \param[in] g     graph
@@ -352,12 +363,12 @@ namespace utl
       return gw;
     }
     
-    /** \brief Get an edge weight from weighted grapg datastructure
-     *  \param[in,out]   gw        weighted graph
-     *  \param[in]       g         corresponding graph
-     *  \param[in]       v1        first vertex of edge
-     *  \param[in]       v2        second vertex of edge
-     *  \param[in]       weight    edge weight
+    /** \brief Get an edge weight from weighted graph.
+     *  \param[in]  g         graph
+     *  \param[in]  gw        corresponding weights
+     *  \param[in]  v1        first vertex of edge
+     *  \param[in]  v2        second vertex of edge
+     *  \param[out] weight    edge weight
      *  \return false if provided edge does not exist in the graph
      */
     inline
@@ -365,7 +376,7 @@ namespace utl
     {
       if (static_cast<size_t>(v1) > g.size() || static_cast<size_t>(v2) > g.size())
       {
-        std::cout << "[utl::graph::getEdgeWeight] input edge vertices are out of bounds\n";
+        std::cout << "[utl::graph::getEdgeWeight] input edge vertices are out of bounds" << std::cout;
         return false;
       }
       
@@ -376,7 +387,7 @@ namespace utl
       // If they are out of bounds - return false
       if ((v1It == g[v2].end()) || (v2It == g[v1].end()))
       {
-        std::cout << "[utl::graph::getEdgeWeight] input edge does not exist in the graph or graph is corrupted\n";
+        std::cout << "[utl::graph::getEdgeWeight] input edge does not exist in the graph or graph is corrupted" << std::cout;
         return false;
       }
       
@@ -386,12 +397,34 @@ namespace utl
       
       if (gw[v1][v2Id] != gw[v2][v1Id])
       {
-        std::cout << "[utl::graph::getEdgeWeight] edge weights differ for (v1, v2) and (v2, v1)\n";
+        std::cout << "[utl::graph::getEdgeWeight] edge weights differ for (v1, v2) and (v2, v1)" << std::cout;
         return false;
       }
       
       weight = gw[v1][v2Id];
           
+      return true;
+    }
+    
+    /** \brief Given a weighted graph get all weights for a set of query edges.
+     *  \param[in]  g             graph
+     *  \param[in]  gw            corresponding weights
+     *  \param[in]  edges         query edges
+     *  \param[out] edge_weights  weights of query edges
+     *  \return false if any of the provided edges do not exist in the graph
+     */
+    inline
+    bool getEdgeWeights (const Graph &g, const GraphWeights &gw, const Edges &edges, EdgeWeights &edge_weights)
+    {
+      edge_weights.resize(edges.size());
+      
+      for (size_t edgeId = 0; edgeId < edges.size(); edgeId++)
+      {
+        bool good = utl::graph::getEdgeWeight(g, gw, edges[edgeId].first, edges[edgeId].second, edge_weights[edgeId]);
+        if (!good)
+          return false;
+      }
+      
       return true;
     }    
     
@@ -484,32 +517,61 @@ namespace utl
       return true;
     }  
     
-    /** \brief Convert graph to a vector of pairs representing edges
-     *  \param[in]       g         corresponding graph
-     *  \return vector of pairs where each pair represents an edge
+//     /** \brief Convert graph to a vector of pairs representing edges
+//      *  \param[in]       g         corresponding graph
+//      *  \return vector of pairs where each pair represents an edge
+//      */
+//     inline
+//     void graphWeighted2EdgePairs (const Graph &g, const GraphWeights &w, std::vector<std::pair<int,int> > &edge_pairs, std::vector<float> &edge_pair_weights)
+//     {
+//       // Get edge pairs
+//       edge_pairs = graph2EdgePairs(g);
+//       
+//       // Get edge pair weights
+//       edge_pair_weights.resize(edge_pairs.size());
+//       for (size_t edgeId = 0; edgeId < edge_pairs.size(); edgeId++)    
+//       {
+//         int sourceId = edge_pairs[edgeId].first;
+//         int targetId = edge_pairs[edgeId].second;
+//         getEdgeWeight(g, w, sourceId, targetId, edge_pair_weights[edgeId]);
+//       }
+//     }
+   
+    /** \brief Convert a graph and corresponding graph weights to a vector of 
+     * edges and corresponding vector of weights.
+     *  \param[in]  g             graph
+     *  \param[in]  gw            graph weights
+     *  \param[in]  edges         vector of edges
+     *  \param[in]  edge_weights  vector of edge weights
      */
     inline
-    void graphWeighted2EdgePairs (const Graph &g, const GraphWeights &w, std::vector<std::pair<int,int> > &edge_pairs, std::vector<float> &edge_pair_weights)
+    void graph2EdgesWeighted  ( const Graph &g,
+                                const GraphWeights &gw,
+                                Edges &edges,
+                                EdgeWeights &edge_weights
+                               )
     {
-      // Get edge pairs
-      edge_pairs = graph2EdgePairs(g);
+      // Get edges
+      edges = graph2Edges(g);
       
-      // Get edge pair weights
-      edge_pair_weights.resize(edge_pairs.size());
-      for (size_t edgeId = 0; edgeId < edge_pairs.size(); edgeId++)    
+      // Get edge weights
+      edge_weights.resize(edges.size());
+      for (size_t edgeId = 0; edgeId < edges.size(); edgeId++)    
       {
-        int sourceId = edge_pairs[edgeId].first;
-        int targetId = edge_pairs[edgeId].second;
-        getEdgeWeight(g, w, sourceId, targetId, edge_pair_weights[edgeId]);
+        int sourceId = edges[edgeId].first;
+        int targetId = edges[edgeId].second;
+        getEdgeWeight(g, gw, sourceId, targetId, edge_weights[edgeId]);
       }
-    }
-    
-    /** \brief Convert graph to a vector of pairs representing edges
-     *  \param[in]       g         corresponding graph
-     *  \return vector of pairs where each pair represents an edge
+    }   
+   
+    /** \brief Check that a graph data structure and a corresponding weight
+     * data structure are in sync i.e. have same dimensions.
+     *  \param[in]  g   graph
+     *  \param[in]  gw  graph weights
+     *  \return TRUE if data structures are in sync
      */
     inline
-    bool chechWeightedGraphCorruption(const Graph &g, const GraphWeights &gw)
+    bool chechWeightedGraphCorruption ( const Graph &g, const GraphWeights &gw)
     {
       // Check vertex sizes
       if (g.size() != gw.size())

@@ -476,7 +476,7 @@ namespace utl
       }                  
     }  
 
-    /** \brief visualize a freground background segmentation of a pointcloud
+    /** \brief Visualize a foreground background segmentation of a pointcloud.
      *  \param[in] visualizer visualizer object
      *  \param[in] cloud input pointcloud
      *  \param[in] fg_indices indices of the foreground points
@@ -668,7 +668,7 @@ namespace utl
     inline
     void showPointGraph ( pcl::visualization::PCLVisualizer &visualizer,
                           const pcl::PointCloud<PointT> &points,
-                          const std::vector<std::pair<int, int> > &edges,
+                          const utl::graph::Edges &edges,
                           const std::string &id_prefix = "adj_line",
                           const float line_width = -1.0
                        )
@@ -700,8 +700,8 @@ namespace utl
                        )
     {
       // Get graph edges and their weights
-      std::vector<std::pair<int, int> > edges;
-      edges = utl::graph::graph2EdgePairs(graph);
+      utl::graph::Edges edges;
+      edges = utl::graph::graph2Edges(graph);
       showPointGraph<PointT>(visualizer, points, edges, id_prefix, line_width);
     }
     
@@ -718,8 +718,8 @@ namespace utl
     inline
     void showPointGraphWeighted ( pcl::visualization::PCLVisualizer &visualizer,
                                   const pcl::PointCloud<PointT> &points,
-                                  const std::vector<std::pair<int, int> > &edges,
-                                  const std::vector<float> &edge_weights,
+                                  const utl::graph::Edges &edges,
+                                  const utl::graph::EdgeWeights &edge_weights,
                                   const std::string &id_prefix = "edge",
                                   const float line_width = -1.0
                        )
@@ -757,9 +757,9 @@ namespace utl
                        )
     {
       // Get graph edges and their weights
-      std::vector<std::pair<int, int> > edges;
+      utl::graph::Edges edges;
       std::vector<float> edgeWeights;
-      utl::graph::graphWeighted2EdgePairs(graph, graph_weights, edges, edgeWeights);
+      utl::graph::graph2EdgesWeighted(graph, graph_weights, edges, edgeWeights);
       
       // Visualize
       showPointGraphWeighted<PointT>(visualizer, points, edges, edgeWeights, id_prefix, line_width);
