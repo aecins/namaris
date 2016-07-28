@@ -380,10 +380,10 @@ namespace utl
     // Oversegmentation visualization
     //----------------------------------------------------------------------------  
 
-    /** \brief visualize multiple pointclouds that are a subset of some other cloud
+    /** \brief Visualize multiple pointclouds that are a subset of some other cloud
      *  \param[in]  visualizer        visualizer object
      *  \param[in]  cloud             pointcloud
-     *  \param[in]  segments   indices of points belonging to each segment
+     *  \param[in]  segments          indices of points belonging to each segment
      *  \param[in]  id_prefix         the point cloud object id prefix (default: segment_)
      *  \param[in]  point_size        size of displayed points
      *  \param[in]  opacity           opacity of displayed points
@@ -412,7 +412,7 @@ namespace utl
       showPointClouds<PointT>(visualizer, clouds, id_prefix, point_size, opacity);
     }  
 
-    /** \brief visualize multiple pointclouds that are a subset of some other colored cloud
+    /** \brief Visualize multiple pointclouds that are a subset of some other colored cloud
      *  \param[in]  visualizer        visualizer object
      *  \param[in]  cloud             pointcloud
      *  \param[in]  segments          indices of points belonging to each segment
@@ -1040,9 +1040,7 @@ namespace utl
 //           return true;
 //         }
 //           
-//         std::cout <<
-//           "[pcl::updateColorbar] Could not find 'vtkLookupTable' actor in current renderer. \
-//           This probably means that colorbar was not being displayed when this function was called" << std::endl;
+//         std::cout << "[pcl::updateColorbar] Could not find 'vtkLookupTable' actor in current renderer. This probably means that colorbar was not being displayed when this function was called" << std::endl;
 //       }
 //       else
 //       {
