@@ -132,42 +132,57 @@ namespace utl
       return std::abs(c.dot(a.cross(b))) / denom;
     }
 
-    // NOTE Why would you have a special case for lines that go through origin?
-    /** \brief Get distance between two lines. Both lines are assumed to go 
-     * through the origin.
-     *  \param[in] line1_direction line 1 direction vector (can be non-unit)
-     *  \param[in] line2_direction line 2 direction vector (can be non-unit)
-     *  \param[in] eps  tolerance for parallel lines check
+//     // NOTE Why would you have a special case for lines that go through origin?
+//     /** \brief Get distance between two lines. Both lines are assumed to go 
+//      * through the origin.
+//      *  \param[in] line1_direction line 1 direction vector (can be non-unit)
+//      *  \param[in] line2_direction line 2 direction vector (can be non-unit)
+//      *  \param[in] eps  tolerance for parallel lines check
+//      *  \return distance between two lines
+//      *  \note http://mathworld.wolfram.com/Line-LineDistance.html
+//      */
+//     template <class Scalar>
+//     inline
+//     Scalar lineToLineDistance ( const Eigen::Matrix< Scalar, 3, 1> &line1_direction,
+//                                 const Eigen::Matrix< Scalar, 3, 1> &line2_direction,
+//                                 const Scalar eps = 1e-12
+//                               )
+//     {
+//       // Get line direction vectors
+//       Eigen::Vector3f a = line1_direction;
+//       Eigen::Vector3f b = line2_direction;
+//       
+//       // If lines are parallel return the 
+//       Scalar denom = a.cross(b).norm();
+//       if (denom < eps)
+//         return static_cast<Scalar>(0.0f);
+//       
+//       Eigen::Vector3f c = line2_direction - line1_direction;
+//       return std::abs(c.dot(a.cross(b))) / denom;
+//     }
+
+    /** \brief Get angle between two skew lines.
+     *  \param[in] line1_direction line 1 direction vector (must be unit length)
+     *  \param[in] line2_direction line 2 direction vector (must be unit length)
      *  \return distance between two lines
      *  \note http://mathworld.wolfram.com/Line-LineDistance.html
      */
     template <class Scalar>
     inline
-    Scalar lineToLineDistance ( const Eigen::Matrix< Scalar, 3, 1> &line1_direction,
-                                const Eigen::Matrix< Scalar, 3, 1> &line2_direction,
-                                const Scalar eps = 1e-12
-                              )
+    Scalar lineLineAngle  ( const Eigen::Matrix< Scalar, 3, 1> &line1_direction,
+                            const Eigen::Matrix< Scalar, 3, 1> &line2_direction
+                          )
     {
-      // Get line direction vectors
-      Eigen::Vector3f a = line1_direction;
-      Eigen::Vector3f b = line2_direction;
-      
-      // If lines are parallel return the 
-      Scalar denom = a.cross(b).norm();
-      if (denom < eps)
-        return static_cast<Scalar>(0.0f);
-      
-      Eigen::Vector3f c = line2_direction - line1_direction;
-      return std::abs(c.dot(a.cross(b))) / denom;
-    }
-
-    /** \brief Get angle between two skew lines.
+      return std::acos(std::abs(utl::math::clampValue(line1_direction.dot(line2_direction), -1.0f, 1.0f)));
+    }    
+    
+    
+    /** \brief Calculate the angle between two skew lines.
      *  \param[in] line1_point1 first point of the line 1
      *  \param[in] line1_point2 second point of the line 1
      *  \param[in] line2_point1 first point of the line 2
      *  \param[in] line2_point2 second point of the line 2
-     *  \param[in] eps  tolerance for parallel lines check
-     *  \return distance between two lines
+     *  \return angle between two lines
      *  \note http://mathworld.wolfram.com/Line-LineDistance.html
      */
     template <class Scalar>
@@ -175,19 +190,18 @@ namespace utl
     Scalar lineLineAngle  ( const Eigen::Matrix< Scalar, 3, 1> &line1_point1,
                             const Eigen::Matrix< Scalar, 3, 1> &line1_point2,
                             const Eigen::Matrix< Scalar, 3, 1> &line2_point1,
-                            const Eigen::Matrix< Scalar, 3, 1> &line2_point2,
-                            const Scalar eps = 1e-12
+                            const Eigen::Matrix< Scalar, 3, 1> &line2_point2
                           )
     {
       // Get line direction vectors
-      Eigen::Vector3f a = line1_point2 - line1_point1;
-      Eigen::Vector3f b = line2_point2 - line2_point1;
+      Eigen::Vector3f a = (line1_point2 - line1_point1).normalized();
+      Eigen::Vector3f b = (line2_point2 - line2_point1).normalized();
       
-      return std::acos(a.dot(b) / (a.norm() * b.norm() ));
+      return lineLineAngle<Scalar>(a, b);
     }
     
     /** \brief Get angle between a line and a plane.
-     *  \param[in] line_direction direction vector of the line (can be non-unit)
+     *  \param[in] line_direction unit length direction vector of the line
      *  \param[in] plane_normal   unit normal of the plane
      */
     template <class Scalar>
@@ -196,12 +210,13 @@ namespace utl
                             const Eigen::Matrix< Scalar, 3, 1> &plane_normal
                           )
     {
-      return std::asin (std::abs (line_direction.dot (plane_normal) / line_direction.norm ()));
+      return std::asin(std::abs(utl::math::clampValue(line_direction.dot(plane_normal), -1.0f, 1.0f)));
     }    
     
     /** \brief Get angle between a line and a plane.
-     *  \param[in] line_direction direction unit vector of the line
-     *  \param[in] plane_normal   unit normal of the plane
+     *  \param[in] line1_point1 first point of the line 1
+     *  \param[in] line1_point2 second point of the line 1
+     *  \param[in] plane_normal unit normal of the plane
      */
     template <class Scalar>
     inline
@@ -210,7 +225,7 @@ namespace utl
                             const Eigen::Matrix< Scalar, 3, 1> &plane_normal
                           )
     {
-      return linePlaneAngle<Scalar>(line1_point - line2_point, plane_normal);
+      return linePlaneAngle<Scalar>((line1_point - line2_point).normalized(), plane_normal);
     }
     
     /** \brief Project point on a line.
