@@ -117,13 +117,13 @@ namespace utl
       occupancy_map.getUnknownLeafCenters(occludedLeafs, bbox_min_oct, bbox_max_oct, depth);
         
       // Convert to PCL pointcloud
-      for (auto leafIt = occludedLeafs.begin(); leafIt != occludedLeafs.end(); leafIt++)
+      cloud.points.resize(occludedLeafs.size());
+      int pointId = 0;
+      for (auto leafIt = occludedLeafs.begin(); leafIt != occludedLeafs.end(); leafIt++, pointId++)
       {
-        PointT curPoint;
-        curPoint.x = leafIt->x();
-        curPoint.y = leafIt->y();
-        curPoint.z = leafIt->z();
-        cloud.push_back(curPoint);    
+        cloud.points[pointId].x = leafIt->x();
+        cloud.points[pointId].y = leafIt->y();
+        cloud.points[pointId].z = leafIt->z();
       }
     }
     
