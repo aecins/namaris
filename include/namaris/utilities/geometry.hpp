@@ -338,6 +338,47 @@ namespace utl
       return false;
     }    
     
+    /** \brief Find the area of intersection of two circles in 2D.
+     *  \param[in]  circle1_c   center of the first cicle
+     *  \param[in]  circle1_r   radius of the first cicle
+     *  \param[in]  circle2_c   center of the second cicle
+     *  \param[in]  circle2_r   radius of the second cicle
+     *  \note http://mathforum.org/library/drmath/view/54785.html
+     */
+    template <class Scalar>
+    inline
+    Scalar circleCircleIntersectionArea ( const Eigen::Matrix< Scalar, 2, 1> circle1_c, const Scalar circle1_r,
+                                          const Eigen::Matrix< Scalar, 2, 1> circle2_c, const Scalar circle2_r
+                                        )
+    {
+      // Distance between two centers
+      float c = pointToPointDistance<Scalar>(circle1_c, circle2_c);
+      
+      // Check if circles don't intersect - return 0
+      if (circle1_r + circle2_r <= c)
+        return static_cast<Scalar>(0.0);
+      
+      // If one circle contains the other - return area of the smaller circle
+      float r_min = std::min(circle1_r, circle2_r);
+      float r_max = std::max(circle1_r, circle2_r);
+      if ((r_min + c) < r_max)
+        return M_PI * r_min * r_min;
+      
+      // Otherwise calculate the area of the intersection lens
+      Scalar cosCBA = (std::pow(circle2_r, 2) + pow(c, 2) - std::pow(circle1_r, 2)) / (2.0 * circle2_r * c);
+      cosCBA = utl::math::clampValue<Scalar>(cosCBA, -1.0, 1.0);
+      Scalar CBD = 2.0 * std::acos(cosCBA);
+      
+      Scalar cosCAB = (std::pow(circle1_r, 2) + pow(c, 2) - std::pow(circle2_r, 2)) / (2.0 * circle1_r * c);
+      cosCAB = utl::math::clampValue<Scalar>(cosCAB, -1.0, 1.0);
+      Scalar CAD = 2.0 * std::acos(cosCAB);
+      
+      Scalar area = std::pow(circle2_r, 2) * (CBD - std::sin(CBD)) + std::pow(circle1_r, 2) * (CAD - std::sin(CAD));
+      area = area / 2.0;
+      
+      return area;
+    }
+    
     /** \brief Find a clockwise angle between two 3D vectors
      *  \param[in] v1 first vector
      *  \param[in] v2 second vector
