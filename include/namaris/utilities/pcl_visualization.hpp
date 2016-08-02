@@ -11,6 +11,7 @@
 #include <vtkRenderWindow.h>
 #include <vtkScalarBarActor.h>
 #include <vtkActor2DCollection.h>
+#include <vtkLine.h>
 
 // Utilities
 #include <namaris/utilities/std_vector.hpp>
@@ -25,16 +26,41 @@ namespace utl
   namespace pclvis
   {
     //----------------------------------------------------------------------------
-    // Frequently used colors
+    // Colors
     //----------------------------------------------------------------------------  
 
+    // Frequently used colors
     const Color red   (1.0, 0.0, 0.0);
     const Color green (0.0, 1.0, 0.0);
     const Color blue  (0.0, 0.0, 1.0);
     const Color white (1.0, 1.0, 1.0);
     const Color black (0.0, 0.0, 0.0);
-
-    const Color bgColor (0.7, 0.7, 1.0);
+    const Color bgColor (0.7, 0.7, 1.0);    // Background color for the PCL visaualizer
+    
+    /** \brief Convert a single point with RGB information to grayscale
+     *  \param[in,out]  point point to be converted to grayscale
+     *  \note conversion is done using the formula used in OpenCV (http://docs.opencv.org/modules/imgproc/doc/miscellaneous_transformations.html)
+     */
+    inline
+    std::vector<Color> colorizeData ( const std::vector<float> &data,
+                                      const int colormal_type = 0
+                                    )
+    {
+      // Get LUT
+      vtkSmartPointer<vtkLookupTable> lut;
+      pcl::visualization::getColormapLUT(static_cast<pcl::visualization::LookUpTableRepresentationProperties>(colormal_type), lut);
+      
+      // Map data to colors
+      std::vector<Color> colors (data.size());
+      for (size_t i = 0; i < data.size(); i++)
+      {
+        double rgb[3];
+        lut->GetColor(static_cast<double>(data[i]), rgb);
+        colors[i] = Color(rgb[0], rgb[1], rgb[2]);
+      }
+      
+      return colors;
+    }
     
     //----------------------------------------------------------------------------
     // Set rendering properties
@@ -217,7 +243,7 @@ namespace utl
                                   const float point_size = -1.0
                                 )
     {
-      pcl::visualization::PointCloudColorHandlerCustomData<PointT, float> color_handler (cloud, data);      
+      pcl::visualization::PointCloudColorHandlerCustomData<PointT, float> color_handler (cloud, data);
       visualizer.addPointCloud<PointT> (cloud, color_handler, id);
       setPointCloudRenderProps(visualizer, id, point_size);
     }
@@ -658,61 +684,88 @@ namespace utl
     //----------------------------------------------------------------------------
 
     /** \brief visualize a graph defined on points in 3D space
-     *  \param[in] visualizer visualizer object
-     *  \param[in] points     points
-     *  \param[in] edges      edges in the graph
-     *  \param[in] id_prefix  prefix to be used for line objects (default: adj_line_)
-     *  \param[in] line_width width of the lines used for display (default 1.0)
-     */  
+     *  \param[in]  visualizer  visualizer object
+     *  \param[in]  points      points
+     *  \param[in]  edges       edges in the graph
+     *  \param[in]  id          id of the graph object (default: graph)
+     *  \param[in]  line_width  width of the graph edge lines used for display (default 1.0)
+     *  \param[in]  color       color of the graph edge lines
+     *  \param[in]  opacity     opacity of the graph edge lines
+     */
     template <typename PointT>
     inline
     void showPointGraph ( pcl::visualization::PCLVisualizer &visualizer,
                           const pcl::PointCloud<PointT> &points,
                           const utl::graph::Edges &edges,
-                          const std::string &id_prefix = "adj_line",
-                          const float line_width = -1.0
+                          const std::string &id = "graph",
+                          const float line_width = -1.0,
+                          const Color &color = Color(),
+                          const float opacity = -1.0
                        )
     {
+      // Create the polydata where we will store all the geometric data
+      vtkSmartPointer<vtkPolyData> linesPolyData = vtkSmartPointer<vtkPolyData>::New();
+      
+      // Create the points
+      vtkSmartPointer<vtkPoints> points_vtk = vtkSmartPointer<vtkPoints>::New();
+      for (size_t pointId = 0; pointId < points.size(); pointId++)
+      {
+        double pt[3] = { points.points[pointId].x, points.points[pointId].y, points.points[pointId].z };
+        points_vtk->InsertNextPoint(pt);
+      }
+      linesPolyData->SetPoints(points_vtk);   // Add the points to the polydata container
+      
+      // Create the lines
+      vtkSmartPointer<vtkCellArray> lines = vtkSmartPointer<vtkCellArray>::New();
       for (size_t edgeId = 0; edgeId < edges.size(); edgeId++)
       {
-        int sourceVtxId = edges[edgeId].first;
-        int targetVtxId = edges[edgeId].second;
-        std::string id_string = id_prefix + std::to_string(edgeId) + "_"  + std::to_string(edgeId);
-        visualizer.addLine(points.points[sourceVtxId], points.points[targetVtxId], id_string);
-        setLineRenderProps(visualizer, id_string, line_width);
+        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
+        line->GetPointIds()->SetId(0, edges[edgeId].first);
+        line->GetPointIds()->SetId(1, edges[edgeId].second);
+        lines->InsertNextCell(line);
       }
+      linesPolyData->SetLines(lines);         // Add the lines to the polydata container
+
+      // Add polygon data to the visualizer
+      visualizer.addModelFromPolyData (linesPolyData, id);
+      utl::pclvis::setLineRenderProps(visualizer, id, line_width, color, opacity);
     }
     
     /** \brief visualize a graph defined on points in 3D space
-     *  \param[in] visualizer visualizer object
-     *  \param[in] points     points
-     *  \param[in] graph      graph adjacency list
-     *  \param[in] id_prefix  prefix to be used for line objects (default: adj_line_)
-     *  \param[in] line_width width of the lines used for display (default 1.0)
+     *  \param[in]  visualizer  visualizer object
+     *  \param[in]  points      points
+     *  \param[in]  graph       graph adjacency list
+     *  \param[in]  id          id of the graph object (default: graph)
+     *  \param[in]  line_width  width of the graph edge lines used for display (default 1.0)
+     *  \param[in]  color       color of the graph edge lines
+     *  \param[in]  opacity     opacity of the graph edge lines
      */  
     template <typename PointT>
     inline
     void showPointGraph ( pcl::visualization::PCLVisualizer &visualizer,
                           const pcl::PointCloud<PointT> &points,
                           const utl::graph::Graph &graph,
-                          const std::string &id_prefix = "adj_line",
-                          const float line_width = -1.0
+                          const std::string &id = "graph",
+                          const float line_width = -1.0,
+                          const Color &color = Color(),
+                          const float opacity = -1.0
                        )
     {
       // Get graph edges and their weights
       utl::graph::Edges edges;
       edges = utl::graph::graph2Edges(graph);
-      showPointGraph<PointT>(visualizer, points, edges, id_prefix, line_width);
+      showPointGraph<PointT>(visualizer, points, edges, id, line_width, color, opacity);
     }
     
     /** \brief Visualize a weighted graph defined on points in 3D space
-     *  \param[in] visualizer visualizer object
-     *  \param[in] points points
-     *  \param[in] edges graph edges
-     *  \param[in] edge_weights edge weights
-     *  \param[in] colormap colormap used to visualize weights
-     *  \param[in] id_prefix prefix to be used for line objects (default: adj_line_)
-     *  \param[in] line_width width of the lines used for display (default 1.0)
+     *  \param[in]  visualizer    visualizer object
+     *  \param[in]  points        points
+     *  \param[in]  edges         graph edges
+     *  \param[in]  edge_weights  edge weights
+     *  \param[in]  id            id of the graph object (default: graph)
+     *  \param[in]  line_width    width of the graph edge lines used for display (default 1.0)
+     *  \param[in]  color         color of the graph edge lines
+     *  \param[in]  opacity       opacity of the graph edge lines
      */  
     template <typename PointT>
     inline
@@ -720,31 +773,63 @@ namespace utl
                                   const pcl::PointCloud<PointT> &points,
                                   const utl::graph::Edges &edges,
                                   const utl::graph::EdgeWeights &edge_weights,
-                                  const std::string &id_prefix = "edge",
-                                  const float line_width = -1.0
-                       )
+                                  const std::string &id = "graph",
+                                  const float line_width = -1.0,
+                                  const float opacity = -1.0
+                                )
     {
-      std::cout << "[utl::pclvis::showPointGraphWeighted] Showing graph weights with color not implemented yet." << std::endl;
-      utl::pclvis::Color color = utl::pclvis::blue;
+      // Check that number of edges and edge weights is the same
+      if (edges.size() != edge_weights.size())
+      {
+        std::cout << "[utl::pclvis::showPointGraphWeighted] Edges and edge weights are different size." << std::endl;
+        return;
+      }
       
-      // Display graphs
+      // Create the polydata where we will store all the geometric data
+      vtkSmartPointer<vtkPolyData> linesPolyData = vtkSmartPointer<vtkPolyData>::New();
+      
+      // Create the points
+      vtkSmartPointer<vtkPoints> points_vtk = vtkSmartPointer<vtkPoints>::New();
+      for (size_t pointId = 0; pointId < points.size(); pointId++)
+      {
+        double pt[3] = { points.points[pointId].x, points.points[pointId].y, points.points[pointId].z };
+        points_vtk->InsertNextPoint(pt);
+      }
+      linesPolyData->SetPoints(points_vtk);   // Add the points to the polydata container
+      
+      // Create the lines
+      vtkSmartPointer<vtkCellArray> lines = vtkSmartPointer<vtkCellArray>::New();
       for (size_t edgeId = 0; edgeId < edges.size(); edgeId++)
       {
-        int sourceVtxId = edges[edgeId].first;
-        int targetVtxId = edges[edgeId].second;
-        std::string id_string = id_prefix + std::to_string(edgeId) + "_"  + std::to_string(edgeId);
-        visualizer.addLine(points.points[sourceVtxId], points.points[targetVtxId], id_string);
-        setLineRenderProps(visualizer, id_string, line_width, color);
+        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
+        line->GetPointIds()->SetId(0, edges[edgeId].first);
+        line->GetPointIds()->SetId(1, edges[edgeId].second);
+        lines->InsertNextCell(line);
       }
+      linesPolyData->SetLines(lines);         // Add the lines to the polydata container
+      
+      // Assign scalars to lines
+      vtkSmartPointer<vtkFloatArray> colors = vtkSmartPointer<vtkFloatArray>::New ();
+      for (size_t edgeId = 0; edgeId < edge_weights.size(); edgeId++)
+        colors->InsertTuple1 (edgeId, edge_weights[edgeId]);
+      linesPolyData->GetCellData()->SetScalars(colors);
+
+      std::cout << linesPolyData->GetCellData()->GetScalars() << ", " << linesPolyData->GetPointData()->GetScalars() << std::endl;
+      
+      // Add polygon data to the visualizer
+      visualizer.addModelFromPolyData (linesPolyData, id);
+      utl::pclvis::setLineRenderProps(visualizer, id, line_width, Color(), opacity);
     }    
     
     /** \brief Visualize a weighted graph defined on points in 3D space
-     *  \param[in] visualizer visualizer object
-     *  \param[in] points points
-     *  \param[in] graph adjacency between points
-     *  \param[in] graph_weights graph weights
-     *  \param[in] id_prefix prefix to be used for line objects (default: adj_line_)
-     *  \param[in] line_width width of the lines used for display (default 1.0)
+     *  \param[in]  visualizer    visualizer object
+     *  \param[in]  points        points
+     *  \param[in]  graph         adjacency between points
+     *  \param[in]  graph_weights graph weights
+     *  \param[in]  id            id of the graph object (default: graph)
+     *  \param[in]  line_width    width of the graph edge lines used for display (default 1.0)
+     *  \param[in]  color         color of the graph edge lines
+     *  \param[in]  opacity       opacity of the graph edge lines
      */  
     template <typename PointT>
     inline
@@ -752,8 +837,9 @@ namespace utl
                                   const pcl::PointCloud<PointT> &points,
                                   const utl::graph::Graph &graph,
                                   const utl::graph::GraphWeights &graph_weights,
-                                  const std::string &id_prefix = "edge",
-                                  const float line_width = -1.0
+                                  const std::string &id = "graph",
+                                  const float line_width = -1.0,
+                                  const float opacity = -1.0
                        )
     {
       // Get graph edges and their weights
@@ -762,7 +848,7 @@ namespace utl
       utl::graph::graph2EdgesWeighted(graph, graph_weights, edges, edgeWeights);
       
       // Visualize
-      showPointGraphWeighted<PointT>(visualizer, points, edges, edgeWeights, id_prefix, line_width);
+      showPointGraphWeighted<PointT>(visualizer, points, edges, edgeWeights, id, line_width, opacity);
     }      
     
     /** \brief DEPRECATED Visualize a weighted graph defined on points in 3D space
