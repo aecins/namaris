@@ -198,7 +198,7 @@ namespace utl
       Eigen::Vector3f b = (line2_point2 - line2_point1).normalized();
       
       return lineLineAngle<Scalar>(a, b);
-    }
+    }    
     
     /** \brief Get angle between a line and a plane.
      *  \param[in] line_direction unit length direction vector of the line
@@ -211,6 +211,21 @@ namespace utl
                           )
     {
       return std::asin(std::abs(utl::math::clampValue(line_direction.dot(plane_normal), -1.0f, 1.0f)));
+    }
+    
+    /** \brief Get angle between a line and a plane.
+     *  \param[in] line_direction     unit length direction vector of the line
+     *  \param[in] plane_coefficients coefficients of the equation of the plane
+     */
+    template <class Scalar>
+    inline
+    Scalar linePlaneAngle ( const Eigen::Matrix< Scalar, 3, 1> &line_direction,
+                            const Eigen::Matrix< Scalar, 4, 1> &plane_coefficients
+                          )
+    {
+      Eigen::Vector3f plane_point, plane_normal;
+      planeCoefficientsToPointNormal<Scalar>(plane_coefficients, plane_point, plane_normal);
+      return linePlaneAngle<Scalar>(line_direction, plane_normal);
     }    
     
     /** \brief Get angle between a line and a plane.
@@ -227,6 +242,21 @@ namespace utl
     {
       return linePlaneAngle<Scalar>((line1_point - line2_point).normalized(), plane_normal);
     }
+    
+    /** \brief Get angle between a line and a plane.
+     *  \param[in] line1_point1 first point of the line 1
+     *  \param[in] line1_point2 second point of the line 1
+     *  \param[in] plane_coefficients coefficients of the equation of the plane
+     */
+    template <class Scalar>
+    inline
+    Scalar linePlaneAngle ( const Eigen::Matrix< Scalar, 3, 1> &line1_point,
+                            const Eigen::Matrix< Scalar, 3, 1> &line2_point,
+                            const Eigen::Matrix< Scalar, 4, 1> &plane_coefficients
+                          )
+    {
+      return linePlaneAngle<Scalar>((line1_point - line2_point).normalized(), plane_coefficients);
+    }    
     
     /** \brief Project point on a line.
      *  \param[in] point point to be projected
