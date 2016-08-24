@@ -131,7 +131,7 @@ alg::RegionGrowing<PointT>::setMinValidUnaryNeighborsFraction (float valid_unary
 {
   if (valid_unary_neighbor_fraction > 1.0f || valid_unary_neighbor_fraction < 0.0f)
   {
-    std::cout << "[alg::RegionGrowing::setMinValidUnaryNeighborsFraction] minimum fraction of points satisfying the unary condition has to be in [0, 1] interval." << std::cout;
+    std::cout << "[alg::RegionGrowing::setMinValidUnaryNeighborsFraction] minimum fraction of points satisfying the unary condition has to be in [0, 1] interval." << std::endl;
     abort();
   }
   
@@ -151,7 +151,7 @@ alg::RegionGrowing<PointT>::setMinValidBinaryNeighborsFraction (float valid_bina
 {
   if (valid_binary_neighbor_fraction > 1.0f || valid_binary_neighbor_fraction < 0.0f)
   {
-    std::cout << "[alg::RegionGrowing::setMinValidBinaryNeighborsFraction] minimum fraction of points satisfying the binary condition has to be in [0, 1] interval." << std::cout;
+    std::cout << "[alg::RegionGrowing::setMinValidBinaryNeighborsFraction] minimum fraction of points satisfying the binary condition has to be in [0, 1] interval." << std::endl;
     abort();
   }
   

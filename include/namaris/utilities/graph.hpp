@@ -376,7 +376,7 @@ namespace utl
     {
       if (static_cast<size_t>(v1) > g.size() || static_cast<size_t>(v2) > g.size())
       {
-        std::cout << "[utl::graph::getEdgeWeight] input edge vertices are out of bounds" << std::cout;
+        std::cout << "[utl::graph::getEdgeWeight] input edge vertices are out of bounds" << std::endl;
         return false;
       }
       
@@ -387,7 +387,7 @@ namespace utl
       // If they are out of bounds - return false
       if ((v1It == g[v2].end()) || (v2It == g[v1].end()))
       {
-        std::cout << "[utl::graph::getEdgeWeight] input edge does not exist in the graph or graph is corrupted" << std::cout;
+        std::cout << "[utl::graph::getEdgeWeight] input edge does not exist in the graph or graph is corrupted"<< std::endl;
         return false;
       }
       
@@ -397,7 +397,7 @@ namespace utl
       
       if (gw[v1][v2Id] != gw[v2][v1Id])
       {
-        std::cout << "[utl::graph::getEdgeWeight] edge weights differ for (v1, v2) and (v2, v1)" << std::cout;
+        std::cout << "[utl::graph::getEdgeWeight] edge weights differ for (v1, v2) and (v2, v1)"<< std::endl;
         return false;
       }
       
