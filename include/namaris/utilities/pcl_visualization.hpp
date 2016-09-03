@@ -1070,25 +1070,59 @@ namespace utl
      */
     template <typename PointT> void
     showCorrespondences ( pcl::visualization::PCLVisualizer &visualizer,
-                          const typename pcl::PointCloud<PointT>::ConstPtr &source_points,
-                          const typename pcl::PointCloud<PointT>::ConstPtr &target_points,
+                          const pcl::PointCloud<PointT> &source_points,
+                          const pcl::PointCloud<PointT> &target_points,
                           const pcl::Correspondences &correspondences,
                           const int nth = 1,
-                          const std::string &id_prefix = "crsp_",
+                          const std::string &id = "correspondences",
                           const float line_width = -1.0f,
                           const float opacity = -1.0f
                         )
     {
-      // Show correspondences
+      // Create the polydata where we will store all the geometric data
+      vtkSmartPointer<vtkPolyData> linesPolyData = vtkSmartPointer<vtkPolyData>::New();
+      
+      // Create the points
+      vtkSmartPointer<vtkPoints> points_vtk = vtkSmartPointer<vtkPoints>::New();
+      for (size_t crspId = 0; crspId < correspondences.size(); crspId++)
+      {
+        int srcId = correspondences[crspId].index_query;
+        int tgtId = correspondences[crspId].index_match;
+        double ptSrc[3] = { source_points.points[srcId].x, source_points.points[srcId].y, source_points.points[srcId].z };
+        double ptTgt[3] = { target_points.points[tgtId].x, target_points.points[tgtId].y, target_points.points[tgtId].z };
+        points_vtk->InsertNextPoint(ptSrc);
+        points_vtk->InsertNextPoint(ptTgt);
+      }
+      linesPolyData->SetPoints(points_vtk);   // Add the points to the polydata container
+
+      // Create the lines
+      vtkSmartPointer<vtkCellArray> lines = vtkSmartPointer<vtkCellArray>::New();
       for (size_t crspId = 0; crspId < correspondences.size(); crspId+=nth)
       {
-        std::string lineId = id_prefix + std::to_string(crspId);
-        int queryId = correspondences[crspId].index_query;
-        int matchId = correspondences[crspId].index_match;
-        visualizer.addLine(source_points->at(queryId), target_points->at(matchId), lineId);
-        utl::pclvis::Color clr = utl::pclvis::getGlasbeyColor(crspId);
-        utl::pclvis::setLineRenderProps(visualizer, lineId, line_width, clr, opacity);
+        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
+        line->GetPointIds()->SetId(0, crspId*2);
+        line->GetPointIds()->SetId(1, crspId*2+1);
+        lines->InsertNextCell(line);
       }
+      linesPolyData->SetLines(lines);         // Add the lines to the polydata container
+      
+      // Color the lines
+      vtkSmartPointer<vtkUnsignedCharArray> colors =  vtkSmartPointer<vtkUnsignedCharArray>::New();
+      colors->SetNumberOfComponents(3);
+      for (size_t crspId = 0; crspId < correspondences.size() / nth; crspId++)
+      {
+        utl::pclvis::Color color = utl::pclvis::getGlasbeyColor(crspId);
+        unsigned char colorC[3];
+        colorC[0] = static_cast<unsigned char>(color.r * 255.0f);
+        colorC[1] = static_cast<unsigned char>(color.g * 255.0f);
+        colorC[2] = static_cast<unsigned char>(color.b * 255.0f);
+        colors->InsertNextTupleValue(colorC);
+      }
+      linesPolyData->GetCellData()->SetScalars(colors);      
+      
+      // Add polygon data to the visualizer
+      visualizer.addModelFromPolyData (linesPolyData, id);
+      utl::pclvis::setLineRenderProps(visualizer, id, line_width, utl::pclvis::Color(), opacity);      
     }
     
     /** \brief DEPRECATED Update the colorbar actor of PCLInteractorStyle
