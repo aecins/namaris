@@ -9,6 +9,7 @@
 #include <pcl/search/kdtree.h>
 #include <pcl/common/centroid.h>
 #include <pcl/common/pca.h>
+#include <pcl/common/angles.h>
 #include <pcl/surface/convex_hull.h>
 
 // CPP tools
@@ -845,7 +846,109 @@ namespace utl
       }
 
       return std::sqrt(minDistance);
-    }    
+    }
+    
+    /** \brief Given a point in the pointcloud and it's neighbors, check if that
+     * point is a boundary point.
+     * The idea is similar to occlusion boundary detection provess described in 
+     * "Multi-scale Feature Extraction on Point-Sampled Surfaces" by Pauly et al.:
+     *  1. Project all neighboring points onto the tangent plane of the input point.
+     *  2. Find the largest angle between vectors connecting the input point to projected neighbors.
+     *  3. If that angle is greater than some threshold, the input point is considered to be a boundary.
+     *  \param[in]  cloud     input pointcloud
+     *  \param[in]  point_id  index of the input point
+     *  \param[in]  neighbors indices of neighbors of the input point
+     *  \param[in]  max_angle maximum angle between two consecutive neighbor points
+     *  \return TRUE if input point is a boundary point
+     *  \note input pointcloud must have normals
+     */
+    template <typename PointT>
+    bool isBoundaryPoint  ( const typename pcl::PointCloud<PointT>  &cloud,
+                            const int point_id,
+                            const std::vector<int> &neighbours,
+                            const float max_angle = pcl::deg2rad(135.0)
+                          )
+    {
+      // If there are no neighbours it must be an occlusion
+      if (neighbours.empty())
+        return true;
+      
+      // Project neighbour points onto the tangent plane of input point
+      Eigen::Vector3f planePoint  = cloud.points[point_id].getVector3fMap();
+      Eigen::Vector3f planeNormal = cloud.points[point_id].getNormalVector3fMap();
+      std::vector<Eigen::Vector3f> projectedNeighbours(neighbours.size());
+      
+      for (size_t neighbourId = 0; neighbourId < neighbours.size(); neighbourId++)
+      {
+        Eigen::Vector3f neighbourPoint          = cloud.points[neighbours[neighbourId]].getVector3fMap();
+        Eigen::Vector3f neighbourPointProjected = utl::geom::projectPointToPlane(neighbourPoint, planePoint, planeNormal);
+        projectedNeighbours[neighbourId]        = neighbourPointProjected;
+      }
+      
+      // Calculate signed angles between first vector and all other vectors
+      Eigen::Vector3f referenceVector = projectedNeighbours[0] - planePoint;
+      std::vector<float> angles (neighbours.size());
+      for (size_t neighbourId = 0; neighbourId < projectedNeighbours.size(); neighbourId++)
+      {
+        Eigen::Vector3f currentVector = projectedNeighbours[neighbourId] - planePoint;
+        float curAngle = utl::geom::vectorAngleCW(referenceVector, currentVector, planeNormal);
+        angles[neighbourId] = curAngle;
+      }
+
+      // Calculate difference between consecutinve angles
+      std::sort(angles.begin(), angles.end());
+      std::vector<float> angleDifference(angles.size());
+      for (size_t i = 1; i < angles.size(); i++)
+        angleDifference[i] = utl::geom::angleDifferenceCCW(angles[i-1], angles[i]);
+      angleDifference[0] = utl::geom::angleDifferenceCCW(angles[angles.size()-1], angles[0]);
+      
+      // If maximum difference is bigger than threshold mark point as boundary point
+      if (*std::max_element(angleDifference.begin(), angleDifference.end()) > max_angle)
+        return true;
+      else
+        return false;
+    }
+    
+    /** \brief Find the boundary points of a pointcloud. See @utl::cloud::isBoundaryPoint
+     * for algorithm details.
+     *  \param[in]  cloud           input pointcloud
+     *  \param[in]  search_radius   radius used to search for point neighbors
+     *  \param[out] boundary_point_ids  indices of boundary points
+     *  \param[in]  max_angle maximum angle between two consecutive neighbor points
+     *  \return TRUE if input point is a boundary point
+     *  \note input pointcloud must have normals
+     */
+    template <typename PointT>
+    void getCloudBoundary ( const typename pcl::PointCloud<PointT>::Ptr &cloud,
+                            const float search_radius,
+                            std::vector<int> &boundary_point_ids,
+                            const float max_angle = pcl::deg2rad(135.0)
+                          )
+    {
+      boundary_point_ids.resize(0);
+      
+      // Prepare search tree
+      typename pcl::search::KdTree<PointNC> tree;
+      tree.setInputCloud(cloud);
+      
+      // Loop over cloud points
+      for (size_t pointId = 0; pointId < cloud->size(); pointId++)
+      {
+        // Find point neighbors
+        std::vector<float>  distancesSquared;
+        std::vector<int>    neighbors;
+        tree.radiusSearch(pointId, search_radius, neighbors, distancesSquared);
+        
+        if (neighbors.size() < 1)         // If there are no neighbors - do nothing. This shouldn't really happen unless search
+          continue;                       // radius is 0. In that case function will find no boundary points.
+        
+        std::vector<int> neighborsFirstExcluded (neighbors.begin()+1, neighbors.end());
+        
+        // Check if point is a boundary point
+        if (utl::cloud::isBoundaryPoint<PointNC>(*cloud, pointId, neighborsFirstExcluded))
+          boundary_point_ids.push_back(pointId);
+      }
+    }
   }
 }
 
