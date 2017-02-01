@@ -71,7 +71,11 @@ namespace utl
       // Write data
       vtkSmartPointer<vtkPLYWriter> plyWriter = vtkSmartPointer<vtkPLYWriter>::New();
       plyWriter->SetFileName(filename.c_str());
+#if VTK_MAJOR_VERSION < 6
       plyWriter->SetInput(mesh);
+#else
+      plyWriter->SetInputData(mesh);
+#endif
       if (hasRGB)
         plyWriter->SetArrayName(RGBdataArrayName.c_str());
       return (plyWriter->Write() == 1);
@@ -102,7 +106,11 @@ namespace utl
       // Transform mesh
       vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter =
         vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+#if VTK_MAJOR_VERSION < 6
       transformFilter->SetInput(mesh_in);
+#else
+      transformFilter->SetInputData(mesh_in);
+#endif
       transformFilter->SetTransform(T_vtk);
       transformFilter->Update();    
       mesh_out = transformFilter->GetOutput();
@@ -190,7 +198,11 @@ namespace utl
   //     cleaner->ConvertLinesToPointsOff();
   //     cleaner->ConvertPolysToLinesOff();
   //     cleaner->ConvertStripsToPolysOff();
+#if VTK_MAJOR_VERSION < 6
       cleaner->SetInput(mesh_out);
+#else
+      cleaner->SetInputData(mesh_out);
+#endif
       cleaner->Update();
       mesh_out = cleaner->GetOutput();
     }
@@ -252,7 +264,11 @@ namespace utl
     {
       vtkSmartPointer<vtkCleanPolyData> cleaner = vtkSmartPointer<vtkCleanPolyData>::New ();
       cleaner->SetTolerance (distance_thresh);
+#if VTK_MAJOR_VERSION < 6
       cleaner->SetInput (mesh_in);
+#else
+      cleaner->SetInputData (mesh_in);
+#endif
       cleaner->PointMergingOn ();
       cleaner->Update ();
       mesh_out = cleaner->GetOutput();    
