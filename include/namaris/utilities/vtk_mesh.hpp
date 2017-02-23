@@ -322,7 +322,7 @@ namespace utl
       std::cout << std::endl;
       std::cout << "Merging points that are too close to each other" << std::endl;
         
-      meshMergeClosePoints(mesh_in, mesh_out);
+      meshMergeClosePoints(mesh_in, mesh_out, distance_thresh);
 
       std::cout << "  points:   " << mesh_out->GetNumberOfPoints() << std::endl;
       std::cout << "  polygons: " << mesh_out->GetNumberOfPolys() << std::endl;
